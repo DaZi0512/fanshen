@@ -1,0 +1,772 @@
+{% extends "base.html" %}
+
+{% block title %}控制台 - GAUSS3D{% endblock %}
+
+{% block page_title %}欢迎回来，{{ session.username }}！{% endblock %}
+{% block page_subtitle %}这里是您的三维模型压缩工作台，开始新的压缩任务或查看历史记录{% endblock %}
+
+{% block content %}
+<div class="dashboard-section">
+    <!-- 快速操作卡片 -->
+    <div class="quick-actions">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-bolt"></i>
+                    快速开始
+                </div>
+            </div>
+
+            <div class="card-content">
+                <div class="action-grid">
+                    <a href="{{ url_for('upload') }}" class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="action-content">
+                            <h3>模型导入</h3>
+                            <p>上传 .ply 点云模型文件</p>
+                            <span class="action-badge">步骤 1</span>
+                        </div>
+                    </a>
+
+                    <a href="{{ url_for('settings') }}" class="action-card {% if 'uploaded_model' not in session %}disabled{% endif %}">
+                        <div class="action-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <div class="action-content">
+                            <h3>参数设置</h3>
+                            <p>配置压缩算法参数</p>
+                            <span class="action-badge">步骤 2</span>
+                        </div>
+                        {% if 'uploaded_model' not in session %}
+                        <div class="action-lock">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+
+                    <a href="{{ url_for('compress') }}" class="action-card {% if 'compression_params' not in session %}disabled{% endif %}">
+                        <div class="action-icon">
+                            <i class="fas fa-compress-arrows-alt"></i>
+                        </div>
+                        <div class="action-content">
+                            <h3>开始压缩</h3>
+                            <p>执行模型压缩任务</p>
+                            <span class="action-badge">步骤 3</span>
+                        </div>
+                        {% if 'compression_params' not in session %}
+                        <div class="action-lock">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+
+                    <a href="{{ url_for('result') if 'last_run_id' in session else '#' }}"
+                       class="action-card {% if 'last_run_id' not in session %}disabled{% endif %}">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="action-content">
+                            <h3>查看结果</h3>
+                            <p>分析压缩质量指标</p>
+                            <span class="action-badge">步骤 4</span>
+                        </div>
+                        {% if 'last_run_id' not in session %}
+                        <div class="action-lock">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 状态与统计 -->
+    <div class="dashboard-stats mt-5">
+        <div class="row">
+            <div class="col">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-value">{{ recent_tasks|length if recent_tasks else 0 }}</h3>
+                        <p class="stat-label">总压缩任务</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-value">
+                            {% if 'uploaded_model' in session %}1{% else %}0{% endif %}
+                        </h3>
+                        <p class="stat-label">待处理模型</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-value">
+                            {% if 'last_run_id' in session %}1{% else %}0{% endif %}
+                        </h3>
+                        <p class="stat-label">最近完成</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-value">{{ session.get('user_since', '新用户') }}</h3>
+                        <p class="stat-label">账户状态</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近任务 -->
+    <div class="recent-tasks mt-5">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-history"></i>
+                    最近压缩任务
+                </div>
+                <a href="{{ url_for('logs') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-external-link-alt"></i> 查看完整日志
+                </a>
+            </div>
+
+            <div class="card-content">
+                {% if recent_tasks %}
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>任务ID</th>
+                                    <th>模型名称</th>
+                                    <th>相似度</th>
+                                    <th>压缩比</th>
+                                    <th>PSNR</th>
+                                    <th>耗时</th>
+                                    <th>创建时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in recent_tasks[:5] %}
+                                <tr>
+                                    <td><code>#{{ task.id }}</code></td>
+                                    <td class="text-ellipsis">{{ task.model_name|truncate(20) }}</td>
+                                    <td>{{ "%.2f"|format(task.similarity) }}</td>
+                                    <td>{{ "%.2f"|format(task.ratio) }}:1</td>
+                                    <td>
+                                        <span class="metric-badge {% if task.psnr > 35 %}badge-success{% elif task.psnr > 30 %}badge-warning{% else %}badge-error{% endif %}">
+                                            {{ "%.2f"|format(task.psnr) }} dB
+                                        </span>
+                                    </td>
+                                    <td>{{ "%.1f"|format(task.duration) }}s</td>
+                                    <td>{{ task.created_at|datetimeformat }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-footer">
+                        <div class="footer-info">
+                            显示最近5条记录，共 {{ recent_tasks|length }} 条记录
+                        </div>
+                        <div class="footer-actions">
+                            <a href="{{ url_for('logs') }}" class="btn btn-secondary">
+                                <i class="fas fa-list"></i> 查看全部
+                            </a>
+                            <a href="{{ url_for('logs') }}?export=true" class="btn btn-success">
+                                <i class="fas fa-download"></i> 导出Excel
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <h3 class="empty-title">暂无压缩记录</h3>
+                        <p class="empty-description">
+                            您还没有执行过压缩任务。点击"模型导入"开始您的第一个压缩任务。
+                        </p>
+                        <a href="{{ url_for('upload') }}" class="btn btn-primary mt-4">
+                            <i class="fas fa-cloud-upload-alt"></i> 开始第一个任务
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统功能 -->
+    <div class="system-features mt-5">
+        <div class="row">
+            <div class="col">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>3D模型查看</h3>
+                        <p>使用内置3D查看器或SuperSplat外部编辑器查看模型效果</p>
+                        <a href="{{ url_for('viewer') }}" class="btn btn-secondary mt-3">
+                            <i class="fas fa-eye"></i> 进入查看器
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>日志与审计</h3>
+                        <p>查看详细的压缩历史记录，支持单条删除和Excel导出</p>
+                        <a href="{{ url_for('logs') }}" class="btn btn-secondary mt-3">
+                            <i class="fas fa-history"></i> 查看日志
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>系统设置</h3>
+                        <p>管理账户偏好设置、通知选项和默认压缩参数</p>
+                        <button class="btn btn-secondary mt-3" disabled>
+                            <i class="fas fa-cog"></i> 设置（开发中）
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 当前会话状态 -->
+    <div class="session-status mt-5">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-info-circle"></i>
+                    当前会话状态
+                </div>
+            </div>
+
+            <div class="card-content">
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">登录用户：</span>
+                        <span class="status-value">{{ session.username }}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">用户ID：</span>
+                        <span class="status-value">#{{ session.user_id }}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">上传模型：</span>
+                        <span class="status-value">
+                            {% if 'uploaded_model' in session %}
+                                <span class="text-success">{{ session.original_model_name|truncate(30) }}</span>
+                            {% else %}
+                                <span class="text-error">无</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">参数设置：</span>
+                        <span class="status-value">
+                            {% if 'compression_params' in session %}
+                                <span class="text-success">已配置</span>
+                            {% else %}
+                                <span class="text-error">未配置</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">最近任务：</span>
+                        <span class="status-value">
+                            {% if 'last_run_id' in session %}
+                                <span class="text-success">#{{ session.last_run_id }}</span>
+                            {% else %}
+                                <span class="text-error">无</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="status-actions mt-4">
+                    {% if 'uploaded_model' in session %}
+                    <form method="POST" action="{{ url_for('clear_session_model') }}" style="display: inline;">
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> 清除上传模型
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-sign-out-alt"></i> 退出登录
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-section {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-lg);
+}
+
+.action-card {
+    display: block;
+    padding: var(--space-lg);
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    border: 2px solid var(--color-medium-gray);
+    text-decoration: none;
+    color: var(--color-text-primary);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.action-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-orange-primary);
+    box-shadow: var(--shadow-lg);
+}
+
+.action-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-style: dashed;
+}
+
+.action-card.disabled:hover {
+    transform: none;
+    border-color: var(--color-medium-gray);
+    box-shadow: none;
+}
+
+.action-icon {
+    font-size: 2rem;
+    color: var(--color-orange-primary);
+    margin-bottom: var(--space-md);
+}
+
+.action-content h3 {
+    font-size: 1.3rem;
+    margin-bottom: var(--space-xs);
+    font-weight: 600;
+}
+
+.action-content p {
+    color: var(--color-text-tertiary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: var(--space-sm);
+}
+
+.action-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-sm);
+    background: rgba(255, 107, 53, 0.1);
+    color: var(--color-orange-primary);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.action-lock {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    color: var(--color-text-tertiary);
+    font-size: 1rem;
+}
+
+.dashboard-stats .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+}
+
+.stat-card {
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    border: 1px solid var(--color-medium-gray);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    border-color: var(--color-orange-primary);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: var(--border-radius-lg);
+    color: var(--color-orange-primary);
+    font-size: 1.5rem;
+}
+
+.stat-value {
+    font-family: var(--font-secondary);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1;
+    margin-bottom: var(--space-xs);
+}
+
+.stat-label {
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.text-ellipsis {
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.metric-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.badge-success {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--color-success);
+}
+
+.badge-warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--color-warning);
+}
+
+.badge-error {
+    background: rgba(244, 67, 54, 0.1);
+    color: var(--color-error);
+}
+
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-medium-gray);
+}
+
+.footer-info {
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+}
+
+.footer-actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.system-features .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-lg);
+}
+
+.feature-card {
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    border: 1px solid var(--color-medium-gray);
+    height: 100%;
+    transition: all 0.3s;
+}
+
+.feature-card:hover {
+    border-color: var(--color-orange-primary);
+    transform: translateY(-2px);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    color: var(--color-orange-primary);
+    margin-bottom: var(--space-md);
+}
+
+.feature-content h3 {
+    font-size: 1.3rem;
+    margin-bottom: var(--space-sm);
+    color: var(--color-text-primary);
+}
+
+.feature-content p {
+    color: var(--color-text-tertiary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-md);
+}
+
+.status-item {
+    padding: var(--space-sm);
+    background: var(--color-surface-light);
+    border-radius: var(--border-radius-md);
+}
+
+.status-label {
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+}
+
+.status-value {
+    color: var(--color-text-primary);
+    font-weight: 500;
+}
+
+.status-actions {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.text-success {
+    color: var(--color-success) !important;
+}
+
+.text-error {
+    color: var(--color-error) !important;
+}
+
+.mt-3 { margin-top: var(--space-md); }
+.mt-4 { margin-top: var(--space-lg); }
+.mt-5 { margin-top: var(--space-xl); }
+
+.btn-sm {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: var(--color-orange-primary);
+    opacity: 0.3;
+    margin-bottom: var(--space-lg);
+}
+
+.empty-title {
+    font-family: var(--font-secondary);
+    font-size: 1.8rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.empty-description {
+    color: var(--color-text-tertiary);
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+@media (max-width: 1024px) {
+    .action-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .system-features .row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .action-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-stats .row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .table-footer {
+        flex-direction: column;
+        gap: var(--space-md);
+        align-items: stretch;
+    }
+
+    .footer-actions {
+        justify-content: center;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-actions {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-stats .row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard loaded for user:', '{{ session.username }}');
+
+    // 更新用户注册时间显示
+    updateUserSince();
+
+    // 为禁用状态的卡片添加点击提示
+    const disabledCards = document.querySelectorAll('.action-card.disabled');
+    disabledCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (this.classList.contains('disabled')) {
+                e.preventDefault();
+
+                const step = this.querySelector('.action-badge').textContent;
+                let message = '';
+
+                if (step.includes('1')) {
+                    message = '请先完成步骤1：上传模型';
+                } else if (step.includes('2')) {
+                    message = '请先完成步骤2：配置参数';
+                } else if (step.includes('3')) {
+                    message = '请先完成步骤3：执行压缩';
+                } else if (step.includes('4')) {
+                    message = '请先完成步骤4：等待结果';
+                }
+
+                alert(message);
+            }
+        });
+    });
+
+    // 动态加载最近任务数据
+    loadRecentTasks();
+
+    // 会话状态检查
+    checkSessionStatus();
+
+    function updateUserSince() {
+        // 这里可以添加从服务器获取用户注册时间的逻辑
+        // 暂时使用会话开始时间
+        const sinceElement = document.querySelector('.stat-value:nth-child(4)');
+        if (sinceElement && sinceElement.textContent === '新用户') {
+            // 可以在这里添加动态计算
+        }
+    }
+
+    function loadRecentTasks() {
+        // 在实际应用中，这里会通过AJAX加载最新的任务数据
+        // 当前版本使用模板渲染，所以不需要额外加载
+        console.log('Recent tasks loaded from template');
+    }
+
+    function checkSessionStatus() {
+        // 检查会话状态，如果接近过期则提示
+        const warningTime = 10 * 60 * 1000; // 10分钟前提醒
+
+        // 这里可以添加会话过期检查逻辑
+        // 暂时只显示控制台信息
+        console.log('Session status check completed');
+    }
+
+    // 自动刷新任务列表（可选）
+    const refreshInterval = 30000; // 30秒
+    let refreshTimer = null;
+
+    // 如果页面有自动刷新需求，可以启用下面的代码
+    // refreshTimer = setInterval(loadRecentTasks, refreshInterval);
+
+    // 清理定时器
+    window.addEventListener('beforeunload', function() {
+        if (refreshTimer) {
+            clearInterval(refreshTimer);
+        }
+    });
+
+    // 添加页面活动检测
+    let lastActivity = Date.now();
+
+    document.addEventListener('mousemove', updateActivity);
+    document.addEventListener('keypress', updateActivity);
+
+    function updateActivity() {
+        lastActivity = Date.now();
+    }
+
+    // 检查不活动状态
+    setInterval(() => {
+        const inactiveTime = Date.now() - lastActivity;
+        if (inactiveTime > 5 * 60 * 1000) { // 5分钟不活动
+            console.log('用户已不活动超过5分钟');
+            // 可以在这里添加自动保存或提醒逻辑
+        }
+    }, 60000); // 每分钟检查一次
+});
+</script>
+{% endblock %}

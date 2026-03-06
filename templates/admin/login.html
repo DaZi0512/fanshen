@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}管理员登录 - GAUSS3D{% endblock %}
+
+{% block page_title %}管理员通道{% endblock %}
+{% block page_subtitle %}请使用管理员凭据登录以访问系统管理功能{% endblock %}
+
+{% block content %}
+<div class="admin-login-section">
+    <div class="row">
+        <div class="col-form">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-user-shield"></i>
+                        管理员登录
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <form method="POST" action="{{ url_for('admin_login') }}" class="admin-login-form">
+                        <div class="form-group">
+                            <label for="username" class="form-label form-label-required">
+                                <i class="fas fa-user-cog"></i> 管理员账号
+                            </label>
+                            <input type="text" id="username" name="username" class="form-input"
+                                   required placeholder="输入管理员账号" autocomplete="username"
+                                   value="{{ request.form.username if request.form }}">
+                            <div class="form-hint">
+                                系统管理员专用账号，与普通用户账号不同
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label form-label-required">
+                                <i class="fas fa-key"></i> 管理员密码
+                            </label>
+                            <input type="password" id="password" name="password" class="form-input"
+                                   required placeholder="输入管理员密码" autocomplete="current-password">
+                            <div class="form-hint">
+                                请确保您在安全的网络环境下操作
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-sign-in-alt"></i> 管理员登录
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="admin-note">
+                        <div class="note-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="note-content">
+                            <h4>安全提示</h4>
+                            <p>管理员账号拥有系统最高权限，请勿在公共计算机上保存登录凭据。
+                                完成管理操作后请及时退出登录。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <p class="auth-redirect">
+                    返回 <a href="{{ url_for('index') }}" class="link">首页</a>
+                    <span class="separator">|</span>
+                    前往 <a href="{{ url_for('login') }}" class="link">用户登录</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="col-info">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-tools"></i>
+                        管理员功能
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="features-list">
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h4>用户管理</h4>
+                                <p>查看所有注册用户，管理用户账户，处理用户请求</p>
+                            </div>
+                        </div>
+
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h4>系统监控</h4>
+                                <p>查看系统使用统计，监控压缩任务执行情况</p>
+                            </div>
+                        </div>
+
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h4>数据维护</h4>
+                                <p>管理系统数据库，执行数据备份与恢复操作</p>
+                            </div>
+                        </div>
+
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h4>系统配置</h4>
+                                <p>调整系统参数，管理文件存储，配置安全策略</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="security-level">
+                        <div class="security-header">
+                            <i class="fas fa-shield-alt"></i>
+                            <h4>安全级别：高</h4>
+                        </div>
+                        <ul class="security-checklist">
+                            <li><i class="fas fa-check-circle"></i> 独立管理员认证</li>
+                            <li><i class="fas fa-check-circle"></i> 操作日志审计</li>
+                            <li><i class="fas fa-check-circle"></i> 会话超时保护</li>
+                            <li><i class="fas fa-check-circle"></i> 防暴力破解机制</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-login-section {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+}
+
+.col-form {
+    min-width: 0;
+}
+
+.col-info {
+    min-width: 0;
+}
+
+.admin-login-form .form-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+    margin-top: var(--space-xs);
+    line-height: 1.4;
+}
+
+.form-actions {
+    margin-top: var(--space-xl);
+}
+
+.admin-note {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    background: rgba(255, 193, 7, 0.05);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    margin-top: var(--space-xl);
+}
+
+.note-icon {
+    color: var(--color-warning);
+    font-size: 1.5rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.note-content h4 {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.note-content p {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.auth-redirect {
+    color: var(--color-text-tertiary);
+}
+
+.auth-redirect .link {
+    color: var(--color-orange-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-redirect .link:hover {
+    text-decoration: underline;
+}
+
+.separator {
+    margin: 0 var(--space-md);
+    color: var(--color-lighter-gray);
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.feature {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(33, 150, 243, 0.1);
+    border-radius: var(--border-radius-md);
+    color: #2196F3;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.feature-content h4 {
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+    font-weight: 600;
+}
+
+.feature-content p {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+}
+
+.security-level {
+    padding: var(--space-lg);
+    background: rgba(76, 175, 80, 0.05);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.security-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.security-header i {
+    color: var(--color-success);
+    font-size: 1.5rem;
+}
+
+.security-header h4 {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.security-checklist {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.security-checklist li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: var(--space-sm);
+}
+
+.security-checklist li:last-child {
+    margin-bottom: 0;
+}
+
+.security-checklist li i {
+    color: var(--color-success);
+}
+
+@media (max-width: 1024px) {
+    .row {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+    }
+
+    .col-info {
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-login-section {
+        padding: 0;
+    }
+
+    .admin-note {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .note-icon {
+        margin-top: 0;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const adminLoginForm = document.querySelector('.admin-login-form');
+
+    // 表单提交处理
+    adminLoginForm.addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            e.preventDefault();
+            alert('请填写管理员账号和密码');
+            return false;
+        }
+
+        // 显示处理中状态
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 验证中...';
+        submitBtn.disabled = true;
+
+        // 3秒后恢复（防止重复提交）
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 3000);
+
+        return true;
+    });
+
+    // 输入框动画效果
+    const inputs = document.querySelectorAll('.form-input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+
+    // 安全提示强化
+    const passwordInput = document.getElementById('password');
+    passwordInput.addEventListener('focus', function() {
+        const hint = this.parentElement.querySelector('.form-hint');
+        if (hint) {
+            hint.innerHTML = '<i class="fas fa-exclamation-circle"></i> 请确保您的工作环境安全，避免被他人窥视';
+            hint.style.color = 'var(--color-warning)';
+        }
+    });
+
+    passwordInput.addEventListener('blur', function() {
+        const hint = this.parentElement.querySelector('.form-hint');
+        if (hint) {
+            hint.innerHTML = '请确保您在安全的网络环境下操作';
+            hint.style.color = '';
+        }
+    });
+});
+</script>
+{% endblock %}

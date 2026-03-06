@@ -1,0 +1,804 @@
+{% extends "base.html" %}
+
+{% block title %}模型导入 - GAUSS3D{% endblock %}
+
+{% block page_title %}导入三维点云模型{% endblock %}
+{% block page_subtitle %}上传您的 .ply 格式点云模型文件，开始压缩流程{% endblock %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="row">
+        <div class="col-upload">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        上传模型文件
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data" class="upload-form">
+                        <div class="file-upload-area" id="uploadArea">
+                            <div class="file-upload-icon">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <div class="file-upload-text">
+                                <h4>拖放文件到此处</h4>
+                                <p>或点击按钮选择文件</p>
+                            </div>
+
+                            <input type="file" id="modelFile" name="model_file" class="file-input"
+                                   accept=".ply" required>
+                            <label for="modelFile" class="file-label">
+                                <i class="fas fa-folder-open"></i> 选择 .ply 文件
+                            </label>
+
+                            <div class="file-name" id="fileName">
+                                未选择文件
+                            </div>
+                        </div>
+
+                        <div class="upload-requirements mt-4">
+                            <h5><i class="fas fa-info-circle"></i> 文件要求：</h5>
+                            <ul>
+                                <li>支持格式：<strong>.ply</strong>（多边形文件格式）</li>
+                                <li>最大文件大小：<strong>1 GB</strong></li>
+                                <li>建议使用ASCII或二进制PLY格式</li>
+                                <li>文件应包含有效的顶点和面数据</li>
+                            </ul>
+                        </div>
+
+                        <div class="upload-actions mt-5">
+                            <button type="submit" class="btn btn-primary btn-block btn-lg" id="uploadBtn">
+                                <i class="fas fa-upload"></i> 上传模型
+                            </button>
+
+                            <div class="upload-progress" id="uploadProgress" style="display: none;">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <div class="progress-text" id="progressText">
+                                    上传中：0%
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-info">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-question-circle"></i>
+                        关于PLY格式
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="info-content">
+                        <h4>什么是PLY文件？</h4>
+                        <p>
+                            PLY（多边形文件格式）是一种用于存储三维图形数据的文件格式。
+                            它被广泛用于三维扫描、计算机图形学和三维打印应用中。
+                        </p>
+
+                        <div class="info-details">
+                            <div class="detail">
+                                <div class="detail-icon">
+                                    <i class="fas fa-code"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <h5>文件结构</h5>
+                                    <p>包含头部信息、顶点数据和面数据，支持ASCII和二进制格式</p>
+                                </div>
+                            </div>
+
+                            <div class="detail">
+                                <div class="detail-icon">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <h5>数据类型</h5>
+                                    <p>存储顶点坐标、面索引、法线、颜色、纹理坐标等属性</p>
+                                </div>
+                            </div>
+
+                            <div class="detail">
+                                <div class="detail-icon">
+                                    <i class="fas fa-compress-arrows-alt"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <h5>压缩潜力</h5>
+                                    <p>点云数据通常有很高的冗余度，适合进行高效的压缩处理</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        注意事项
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="warning-list">
+                        <div class="warning-item">
+                            <div class="warning-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="warning-content">
+                                <h5>文件安全</h5>
+                                <p>上传的文件会进行安全检查，仅处理有效的PLY格式文件</p>
+                            </div>
+                        </div>
+
+                        <div class="warning-item">
+                            <div class="warning-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="warning-content">
+                                <h5>存储策略</h5>
+                                <p>上传的模型文件会保存在服务器上，仅供您的账户访问</p>
+                            </div>
+                        </div>
+
+                        <div class="warning-item">
+                            <div class="warning-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="warning-content">
+                                <h5>处理时间</h5>
+                                <p>大型文件上传可能需要一些时间，请耐心等待上传完成</p>
+                            </div>
+                        </div>
+
+                        <div class="warning-item">
+                            <div class="warning-icon">
+                                <i class="fas fa-trash-alt"></i>
+                            </div>
+                            <div class="warning-content">
+                                <h5>清理策略</h5>
+                                <p>会话结束后，上传的文件可能会被清理，请及时处理</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-cogs"></i>
+                        下一步操作
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="next-steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h5>上传模型</h5>
+                                <p>选择并上传您的 .ply 点云文件</p>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h5>配置参数</h5>
+                                <p>设置压缩算法参数和质量要求</p>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h5>开始压缩</h5>
+                                <p>执行模型压缩任务并等待完成</p>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h5>查看结果</h5>
+                                <p>分析压缩质量指标和可视化结果</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <p class="step-note">
+                            当前步骤：<strong>步骤 1 - 上传模型</strong>
+                        </p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm mt-2">
+                            <i class="fas fa-arrow-left"></i> 返回控制台
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-section {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+}
+
+.col-upload {
+    min-width: 0;
+}
+
+.col-info {
+    min-width: 0;
+}
+
+.file-upload-area {
+    border: 3px dashed var(--color-medium-gray);
+    border-radius: var(--border-radius-xl);
+    padding: var(--space-xl);
+    text-align: center;
+    transition: all 0.3s;
+    background: var(--color-surface);
+    cursor: pointer;
+    margin-bottom: var(--space-lg);
+}
+
+.file-upload-area:hover {
+    border-color: var(--color-orange-primary);
+    background: var(--color-surface-light);
+}
+
+.file-upload-area.dragover {
+    border-color: var(--color-orange-primary);
+    background: rgba(255, 107, 53, 0.05);
+    transform: scale(1.02);
+}
+
+.file-upload-icon {
+    font-size: 4rem;
+    color: var(--color-orange-primary);
+    margin-bottom: var(--space-lg);
+    opacity: 0.8;
+}
+
+.file-upload-text h4 {
+    font-size: 1.5rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.file-upload-text p {
+    color: var(--color-text-tertiary);
+    font-size: 1rem;
+    margin-bottom: var(--space-lg);
+}
+
+.file-label {
+    display: inline-block;
+    background: var(--color-orange-primary);
+    color: white;
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--border-radius-lg);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+}
+
+.file-label:hover {
+    background: var(--color-orange-secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-orange);
+}
+
+.file-name {
+    margin-top: var(--space-lg);
+    font-size: 1rem;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-secondary);
+    padding: var(--space-md);
+    background: var(--color-surface-light);
+    border-radius: var(--border-radius-md);
+    word-break: break-all;
+}
+
+.file-name strong {
+    color: var(--color-orange-primary);
+}
+
+.upload-requirements {
+    padding: var(--space-lg);
+    background: var(--color-surface-light);
+    border-radius: var(--border-radius-lg);
+}
+
+.upload-requirements h5 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-md);
+    font-size: 1.1rem;
+}
+
+.upload-requirements h5 i {
+    color: var(--color-orange-primary);
+}
+
+.upload-requirements ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.upload-requirements li {
+    padding: var(--space-xs) 0;
+    color: var(--color-text-secondary);
+    position: relative;
+    padding-left: var(--space-lg);
+}
+
+.upload-requirements li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--color-orange-primary);
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.upload-requirements strong {
+    color: var(--color-orange-primary);
+    font-weight: 600;
+}
+
+.upload-actions {
+    text-align: center;
+}
+
+.upload-progress {
+    margin-top: var(--space-lg);
+    background: var(--color-surface);
+    padding: var(--space-lg);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-medium-gray);
+}
+
+.progress-bar {
+    height: 12px;
+    background: var(--color-medium-gray);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: var(--space-md);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-orange-primary), var(--color-orange-secondary));
+    border-radius: 6px;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-family: var(--font-secondary);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+}
+
+.btn-lg {
+    padding: var(--space-lg) var(--space-xl);
+    font-size: 1.1rem;
+}
+
+.info-content h4 {
+    font-size: 1.3rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-md);
+}
+
+.info-content p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-lg);
+}
+
+.info-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.detail {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+}
+
+.detail-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: var(--border-radius-md);
+    color: var(--color-orange-primary);
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.detail-content h5 {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.detail-content p {
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+
+.warning-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.warning-item {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+}
+
+.warning-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: var(--border-radius-md);
+    color: var(--color-warning);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.warning-content h5 {
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.warning-content p {
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+
+.next-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.step {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+}
+
+.step-number {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface-light);
+    border: 2px solid var(--color-medium-gray);
+    border-radius: 50%;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.step.current .step-number {
+    background: var(--color-orange-primary);
+    border-color: var(--color-orange-primary);
+    color: white;
+}
+
+.step-content h5 {
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.step-content p {
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 0;
+}
+
+.step-note {
+    color: var(--color-text-tertiary);
+    font-size: 0.95rem;
+}
+
+.step-note strong {
+    color: var(--color-orange-primary);
+}
+
+.btn-sm {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+}
+
+.mt-2 { margin-top: var(--space-sm); }
+.mt-4 { margin-top: var(--space-lg); }
+.mt-5 { margin-top: var(--space-xl); }
+
+@media (max-width: 1024px) {
+    .row {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+    }
+
+    .file-upload-area {
+        padding: var(--space-lg);
+    }
+
+    .file-upload-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .upload-section {
+        padding: 0;
+    }
+
+    .file-upload-text h4 {
+        font-size: 1.3rem;
+    }
+
+    .file-label {
+        padding: var(--space-md) var(--space-lg);
+        font-size: 1rem;
+    }
+
+    .info-details {
+        gap: var(--space-md);
+    }
+
+    .detail {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .warning-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .step {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--space-sm);
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('modelFile');
+    const fileName = document.getElementById('fileName');
+    const uploadForm = document.querySelector('.upload-form');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+
+    let selectedFile = null;
+
+    // 点击上传区域触发文件选择
+    uploadArea.addEventListener('click', function(e) {
+        if (e.target !== fileInput && !e.target.classList.contains('file-label')) {
+            fileInput.click();
+        }
+    });
+
+    // 拖放功能
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function() {
+        this.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+
+        if (e.dataTransfer.files.length) {
+            const file = e.dataTransfer.files[0];
+            if (validateFile(file)) {
+                fileInput.files = e.dataTransfer.files;
+                updateFileName(file);
+                selectedFile = file;
+            }
+        }
+    });
+
+    // 文件选择变化
+    fileInput.addEventListener('change', function() {
+        if (this.files.length) {
+            const file = this.files[0];
+            if (validateFile(file)) {
+                updateFileName(file);
+                selectedFile = file;
+            } else {
+                this.value = ''; // 清除无效文件
+                fileName.innerHTML = '未选择文件';
+                fileName.style.color = 'var(--color-text-tertiary)';
+                selectedFile = null;
+            }
+        }
+    });
+
+    // 文件验证
+    function validateFile(file) {
+        const allowedExtensions = ['.ply'];
+        const maxSize = 1 * 1024 * 1024 * 1024; // 1GB
+
+        // 检查扩展名
+        const extension = '.' + file.name.split('.').pop().toLowerCase();
+        if (!allowedExtensions.includes(extension)) {
+            alert('错误：仅支持 .ply 格式文件');
+            return false;
+        }
+
+        // 检查文件大小
+        if (file.size > maxSize) {
+            alert('错误：文件大小超过1GB限制');
+            return false;
+        }
+
+        // 检查文件名安全
+        if (!/^[\w\-. ]+$/.test(file.name)) {
+            alert('错误：文件名包含非法字符');
+            return false;
+        }
+
+        return true;
+    }
+
+    // 更新文件名显示
+    function updateFileName(file) {
+        const fileSize = formatFileSize(file.size);
+        fileName.innerHTML = `已选择: <strong>${file.name}</strong> (${fileSize})`;
+        fileName.style.color = 'var(--color-orange-primary)';
+    }
+
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 表单提交处理
+    uploadForm.addEventListener('submit', function(e) {
+        if (!selectedFile) {
+            e.preventDefault();
+            alert('请选择要上传的文件');
+            return false;
+        }
+
+        // 显示进度条
+        uploadBtn.style.display = 'none';
+        uploadProgress.style.display = 'block';
+
+        // 模拟上传进度（实际应用中这里会使用真实的XMLHttpRequest或Fetch API）
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress > 100) progress = 100;
+
+            progressFill.style.width = progress + '%';
+            progressText.textContent = `上传中：${Math.round(progress)}%`;
+
+            if (progress >= 100) {
+                clearInterval(progressInterval);
+                progressText.textContent = '上传完成，正在处理...';
+            }
+        }, 200);
+
+        // 禁用重复提交
+        uploadBtn.disabled = true;
+
+        return true;
+    });
+
+    // 添加上传区域动画
+    uploadArea.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-2px)';
+    });
+
+    uploadArea.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+    });
+
+    // 添加上传前的文件预览（可选）
+    function previewFileInfo(file) {
+        // 在实际应用中，这里可以解析PLY文件头部信息并显示
+        console.log('Selected file:', file.name, formatFileSize(file.size));
+    }
+
+    // 页面加载时检查是否已有上传的文件
+    if ('{{ session.uploaded_model }}' !== 'None') {
+        // 显示已上传文件信息
+        const modelName = '{{ session.original_model_name }}';
+        if (modelName && modelName !== 'None') {
+            fileName.innerHTML = `已上传: <strong>${modelName}</strong>`;
+            fileName.style.color = 'var(--color-success)';
+            uploadBtn.textContent = '继续下一步';
+        }
+    }
+
+    // 键盘快捷键
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + U 选择文件
+        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+            e.preventDefault();
+            fileInput.click();
+        }
+
+        // Esc 清除选择
+        if (e.key === 'Escape' && selectedFile) {
+            fileInput.value = '';
+            fileName.innerHTML = '未选择文件';
+            fileName.style.color = 'var(--color-text-tertiary)';
+            selectedFile = null;
+        }
+    });
+
+    // 文件大小限制提示
+    const sizeLimit = 1 * 1024 * 1024 * 1024; // 1GB
+    fileInput.addEventListener('change', function() {
+        if (this.files[0] && this.files[0].size > sizeLimit * 0.9) {
+            // 文件接近大小限制
+            alert('提示：文件大小接近1GB限制，上传可能需要较长时间');
+        }
+    });
+});
+</script>
+{% endblock %}

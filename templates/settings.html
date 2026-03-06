@@ -1,0 +1,991 @@
+{% extends "base.html" %}
+
+{% block title %}参数设置 - GAUSS3D{% endblock %}
+
+{% block page_title %}配置压缩参数{% endblock %}
+{% block page_subtitle %}调整算法参数，优化您的三维模型压缩效果{% endblock %}
+
+{% block content %}
+<div class="settings-section">
+    <div class="row">
+        <div class="col-form">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-sliders-h"></i>
+                        压缩参数配置
+                    </div>
+                    <div class="card-badge">
+                        <span class="badge badge-info">当前模型：{{ session.original_model_name|truncate(30) }}</span>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <form method="POST" action="{{ url_for('settings') }}" class="settings-form">
+                        <!-- 相似度参数 -->
+                        <div class="param-group">
+                            <div class="param-header">
+                                <div class="param-title">
+                                    <i class="fas fa-balance-scale"></i>
+                                    <h3>相似度阈值</h3>
+                                </div>
+                                <div class="param-value">
+                                    <span id="similarityValue">0.80</span>
+                                </div>
+                            </div>
+
+                            <div class="param-description">
+                                <p>控制压缩后模型与原始模型的视觉相似度。值越高，质量越好，但压缩率越低。</p>
+                                <div class="param-range">
+                                    <span class="range-label">低质量</span>
+                                    <input type="range" id="similarity" name="similarity" class="form-range"
+                                           min="0.70" max="0.95" step="0.01" value="0.80"
+                                           oninput="updateSimilarityValue(this.value)">
+                                    <span class="range-label">高质量</span>
+                                </div>
+                                <div class="param-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    范围：0.70 ~ 0.95 | 推荐值：0.80 ~ 0.90
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 剪枝率参数 -->
+                        <div class="param-group">
+                            <div class="param-header">
+                                <div class="param-title">
+                                    <i class="fas fa-cut"></i>
+                                    <h3>剪枝率</h3>
+                                </div>
+                                <div class="param-value">
+                                    <span id="pruneValue">0.50</span>
+                                </div>
+                            </div>
+
+                            <div class="param-description">
+                                <p>控制从原始模型中移除的点云比例。值越高，压缩率越高，但可能损失细节。</p>
+                                <div class="param-range">
+                                    <span class="range-label">保留更多</span>
+                                    <input type="range" id="prune" name="prune" class="form-range"
+                                           min="0.30" max="0.90" step="0.01" value="0.50"
+                                           oninput="updatePruneValue(this.value)">
+                                    <span class="range-label">压缩更强</span>
+                                </div>
+                                <div class="param-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    范围：0.30 ~ 0.90 | 推荐值：0.40 ~ 0.70
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 编码数参数 -->
+                        <div class="param-group">
+                            <div class="param-header">
+                                <div class="param-title">
+                                    <i class="fas fa-code"></i>
+                                    <h3>编码数量</h3>
+                                </div>
+                                <div class="param-value">
+                                    <span id="numCodesValue">128</span>
+                                </div>
+                            </div>
+
+                            <div class="param-description">
+                                <p>控制压缩算法使用的编码向量数量。更多编码可以提供更好的质量但增加计算成本。</p>
+                                <div class="param-options">
+                                    <div class="options-grid">
+                                        {% for code in [64, 128, 256, 512, 1024, 2048] %}
+                                        <label class="option-label">
+                                            <input type="radio" name="num_codes" value="{{ code }}"
+                                                   class="option-input" {% if code == 128 %}checked{% endif %}>
+                                            <span class="option-content">
+                                                <span class="option-value">{{ code }}</span>
+                                                <span class="option-desc">
+                                                    {% if code <= 128 %}快速{% elif code <= 512 %}平衡{% else %}高质量{% endif %}
+                                                </span>
+                                            </span>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="param-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    选择编码数量：值越大质量越好，但处理时间越长
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 参数预览 -->
+                        <div class="param-preview">
+                            <h4><i class="fas fa-chart-line"></i> 参数效果预览</h4>
+                            <div class="preview-metrics">
+                                <div class="metric">
+                                    <div class="metric-label">预估压缩比</div>
+                                    <div class="metric-value" id="previewRatio">2.5:1</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-label">预估质量 (PSNR)</div>
+                                    <div class="metric-value" id="previewPSNR">34.2 dB</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-label">预估处理时间</div>
+                                    <div class="metric-value" id="previewTime">3.2 秒</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions mt-5">
+                            <div class="action-buttons">
+                                <a href="{{ url_for('upload') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> 重新上传模型
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-play-circle"></i> 开始压缩
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-info">
+            <!-- 参数说明 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-book"></i>
+                        参数说明
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="param-explanations">
+                        <div class="explanation">
+                            <div class="explanation-icon">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <div class="explanation-content">
+                                <h4>相似度阈值</h4>
+                                <p>衡量压缩后模型与原始模型在视觉上的相似程度。使用结构相似性指数（SSIM）计算，值越接近1表示质量越好。</p>
+                                <ul>
+                                    <li><strong>0.70-0.75</strong>：基础质量，适合快速预览</li>
+                                    <li><strong>0.75-0.85</strong>：良好质量，适合大多数应用</li>
+                                    <li><strong>0.85-0.95</strong>：高质量，适合精细分析</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="explanation">
+                            <div class="explanation-icon">
+                                <i class="fas fa-cut"></i>
+                            </div>
+                            <div class="explanation-content">
+                                <h4>剪枝率</h4>
+                                <p>控制从点云模型中移除的冗余点比例。基于点的空间密度和重要性进行选择性剪枝。</p>
+                                <ul>
+                                    <li><strong>0.30-0.50</strong>：轻度压缩，保留大部分细节</li>
+                                    <li><strong>0.50-0.70</strong>：适中压缩，平衡质量与大小</li>
+                                    <li><strong>0.70-0.90</strong>：强力压缩，大幅减小文件</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="explanation">
+                            <div class="explanation-icon">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <div class="explanation-content">
+                                <h4>编码数量</h4>
+                                <p>控制压缩算法使用的特征编码向量数量。更多编码可以捕捉更复杂的几何特征。</p>
+                                <ul>
+                                    <li><strong>64-128</strong>：快速处理，基础特征</li>
+                                    <li><strong>256-512</strong>：平衡处理，良好质量</li>
+                                    <li><strong>1024-2048</strong>：精细处理，高质量</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 算法信息 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-cogs"></i>
+                        算法信息
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="algorithm-info">
+                        <h4>高斯点云压缩算法</h4>
+                        <p>本系统使用基于高斯分布的混合模型进行点云压缩，通过以下步骤：</p>
+                        <ol>
+                            <li><strong>特征提取</strong>：分析点云的空间分布和几何特征</li>
+                            <li><strong>高斯混合建模</strong>：使用多个高斯分布拟合点云数据</li>
+                            <li><strong>重要性采样</strong>：根据点的重要性进行选择性保留</li>
+                            <li><strong>量化编码</strong>：对保留的点进行高效编码存储</li>
+                        </ol>
+
+                        <div class="algorithm-tip">
+                            <i class="fas fa-lightbulb"></i>
+                            <div class="tip-content">
+                                <strong>优化建议：</strong> 对于复杂模型，建议使用较高的相似度阈值（0.85+）和中等的剪枝率（0.50-0.60）以获得最佳效果。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 当前状态 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-info-circle"></i>
+                        当前状态
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="status-info">
+                        <div class="status-item">
+                            <span class="status-label">已上传模型：</span>
+                            <span class="status-value">{{ session.original_model_name }}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">文件状态：</span>
+                            <span class="status-value badge-success">已验证</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">用户：</span>
+                            <span class="status-value">{{ session.username }}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">当前步骤：</span>
+                            <span class="status-value">2/4 - 参数配置</span>
+                        </div>
+                    </div>
+
+                    <div class="status-actions mt-4">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-tachometer-alt"></i> 返回控制台
+                        </a>
+                        <form method="POST" action="{{ url_for('clear_session_model') }}" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i> 清除模型
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-section {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+}
+
+.col-form {
+    min-width: 0;
+}
+
+.col-info {
+    min-width: 0;
+}
+
+.card-badge {
+    display: flex;
+    align-items: center;
+}
+
+.badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge-info {
+    background: rgba(33, 150, 243, 0.1);
+    color: var(--color-info);
+}
+
+.badge-success {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--color-success);
+}
+
+.param-group {
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid var(--color-medium-gray);
+}
+
+.param-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.param-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.param-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.param-title h3 {
+    font-size: 1.3rem;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.param-title i {
+    color: var(--color-orange-primary);
+    font-size: 1.2rem;
+}
+
+.param-value {
+    font-family: var(--font-secondary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-orange-primary);
+}
+
+.param-description p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+}
+
+.param-range {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin: var(--space-lg) 0;
+}
+
+.range-label {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    min-width: 80px;
+    text-align: center;
+}
+
+.form-range {
+    flex: 1;
+    height: 8px;
+    background: var(--color-medium-gray);
+    border-radius: 4px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    background: var(--color-orange-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--color-bg);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-range::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: var(--color-orange-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--color-bg);
+    box-shadow: var(--shadow-sm);
+}
+
+.param-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+}
+
+.param-hint i {
+    color: var(--color-orange-primary);
+}
+
+.param-options {
+    margin: var(--space-lg) 0;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-sm);
+}
+
+.option-label {
+    display: block;
+    cursor: pointer;
+}
+
+.option-input {
+    display: none;
+}
+
+.option-input:checked + .option-content {
+    background: var(--color-orange-primary);
+    border-color: var(--color-orange-primary);
+    color: white;
+}
+
+.option-input:checked + .option-content .option-desc {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.option-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    background: var(--color-surface);
+    border: 2px solid var(--color-medium-gray);
+    border-radius: var(--border-radius-md);
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.option-content:hover {
+    border-color: var(--color-orange-primary);
+    transform: translateY(-2px);
+}
+
+.option-value {
+    font-family: var(--font-secondary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-xs);
+}
+
+.option-desc {
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+}
+
+.param-preview {
+    margin-top: var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--color-surface-light);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-medium-gray);
+}
+
+.param-preview h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-lg);
+}
+
+.param-preview h4 i {
+    color: var(--color-orange-primary);
+}
+
+.preview-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+}
+
+.metric {
+    text-align: center;
+    padding: var(--space-md);
+    background: var(--color-surface);
+    border-radius: var(--border-radius-md);
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    margin-bottom: var(--space-xs);
+}
+
+.metric-value {
+    font-family: var(--font-secondary);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-orange-primary);
+}
+
+.form-actions {
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-lg);
+}
+
+.param-explanations {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+.explanation {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+}
+
+.explanation-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: var(--border-radius-md);
+    color: var(--color-orange-primary);
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.explanation-content h4 {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.explanation-content p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+}
+
+.explanation-content ul {
+    list-style: none;
+    padding-left: 0;
+    margin-top: var(--space-sm);
+}
+
+.explanation-content li {
+    padding: var(--space-xs) 0;
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+    position: relative;
+    padding-left: var(--space-md);
+}
+
+.explanation-content li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--color-orange-primary);
+    font-weight: bold;
+}
+
+.explanation-content strong {
+    color: var(--color-orange-primary);
+    font-weight: 600;
+}
+
+.algorithm-info h4 {
+    font-size: 1.2rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-md);
+}
+
+.algorithm-info p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-lg);
+}
+
+.algorithm-info ol {
+    padding-left: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.algorithm-info li {
+    padding: var(--space-xs) 0;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.algorithm-info strong {
+    color: var(--color-orange-primary);
+}
+
+.algorithm-tip {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: var(--border-radius-md);
+    border-left: 4px solid var(--color-warning);
+}
+
+.algorithm-tip i {
+    color: var(--color-warning);
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.tip-content {
+    flex: 1;
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-sm);
+    background: var(--color-surface-light);
+    border-radius: var(--border-radius-sm);
+}
+
+.status-label {
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+}
+
+.status-value {
+    color: var(--color-text-primary);
+    font-weight: 500;
+    text-align: right;
+    max-width: 200px;
+    word-break: break-word;
+}
+
+.status-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+}
+
+.btn-sm {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+}
+
+.mt-4 { margin-top: var(--space-lg); }
+.mt-5 { margin-top: var(--space-xl); }
+
+@media (max-width: 1024px) {
+    .row {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+    }
+
+    .options-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .preview-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .settings-section {
+        padding: 0;
+    }
+
+    .param-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .param-value {
+        align-self: flex-start;
+    }
+
+    .param-range {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .range-label {
+        min-width: auto;
+        width: 100%;
+        text-align: center;
+    }
+
+    .options-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .preview-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+
+    .explanation {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .status-item {
+        flex-direction: column;
+        gap: var(--space-xs);
+        text-align: center;
+    }
+
+    .status-value {
+        text-align: center;
+        max-width: none;
+    }
+
+    .status-actions {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取DOM元素
+    const similaritySlider = document.getElementById('similarity');
+    const pruneSlider = document.getElementById('prune');
+    const similarityValue = document.getElementById('similarityValue');
+    const pruneValue = document.getElementById('pruneValue');
+    const numCodesRadios = document.querySelectorAll('input[name="num_codes"]');
+    const previewRatio = document.getElementById('previewRatio');
+    const previewPSNR = document.getElementById('previewPSNR');
+    const previewTime = document.getElementById('previewTime');
+
+    // 初始化显示
+    updateSimilarityValue(similaritySlider.value);
+    updatePruneValue(pruneSlider.value);
+    updatePreview();
+
+    // 相似度滑块事件
+    similaritySlider.addEventListener('input', function() {
+        updateSimilarityValue(this.value);
+        updatePreview();
+    });
+
+    // 剪枝率滑块事件
+    pruneSlider.addEventListener('input', function() {
+        updatePruneValue(this.value);
+        updatePreview();
+    });
+
+    // 编码数单选按钮事件
+    numCodesRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                updateNumCodesValue(this.value);
+                updatePreview();
+            }
+        });
+    });
+
+    // 更新相似度显示
+    function updateSimilarityValue(value) {
+        similarityValue.textContent = parseFloat(value).toFixed(2);
+    }
+
+    // 更新剪枝率显示
+    function updatePruneValue(value) {
+        pruneValue.textContent = parseFloat(value).toFixed(2);
+    }
+
+    // 更新编码数显示
+    function updateNumCodesValue(value) {
+        // 这里可以更新编码数显示，如果需要的话
+        const numCodesValue = document.getElementById('numCodesValue');
+        if (numCodesValue) {
+            numCodesValue.textContent = value;
+        }
+    }
+
+    // 更新预览指标
+    function updatePreview() {
+        const similarity = parseFloat(similaritySlider.value);
+        const prune = parseFloat(pruneSlider.value);
+
+        // 获取选中的编码数
+        let numCodes = 128;
+        numCodesRadios.forEach(radio => {
+            if (radio.checked) {
+                numCodes = parseInt(radio.value);
+            }
+        });
+
+        // 计算预估指标（模拟算法）
+        const baseRatio = 1.5 + (1 - prune) * 2.5; // 基础压缩比
+        const similarityBonus = (similarity - 0.7) * 2; // 相似度影响
+        const codesBonus = Math.log2(numCodes / 64) * 0.5; // 编码数影响
+
+        const ratio = baseRatio + similarityBonus - codesBonus;
+        const psnr = 30 + similarity * 5 + (1 - prune) * 3 + Math.log2(numCodes / 64) * 0.5;
+        const time = 1.5 + (numCodes / 256) * 2 + (1 - prune) * 1.5;
+
+        // 更新显示
+        previewRatio.textContent = ratio.toFixed(1) + ':1';
+        previewPSNR.textContent = psnr.toFixed(1) + ' dB';
+        previewTime.textContent = time.toFixed(1) + ' 秒';
+
+        // 添加视觉反馈
+        previewRatio.style.transform = 'scale(1.1)';
+        previewPSNR.style.transform = 'scale(1.1)';
+        previewTime.style.transform = 'scale(1.1)';
+
+        setTimeout(() => {
+            previewRatio.style.transform = 'scale(1)';
+            previewPSNR.style.transform = 'scale(1)';
+            previewTime.style.transform = 'scale(1)';
+        }, 150);
+    }
+
+    // 滑块视觉反馈
+    const sliders = document.querySelectorAll('.form-range');
+    sliders.forEach(slider => {
+        slider.addEventListener('mousedown', function() {
+            this.style.cursor = 'grabbing';
+        });
+
+        slider.addEventListener('mouseup', function() {
+            this.style.cursor = 'grab';
+        });
+
+        // 添加滑块轨迹颜色
+        this.addEventListener('input', function() {
+            const value = (this.value - this.min) / (this.max - this.min) * 100;
+            this.style.background = `linear-gradient(to right, var(--color-orange-primary) 0%, var(--color-orange-primary) ${value}%, var(--color-medium-gray) ${value}%, var(--color-medium-gray) 100%)`;
+        });
+
+        // 初始化滑块颜色
+        const value = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+        slider.style.background = `linear-gradient(to right, var(--color-orange-primary) 0%, var(--color-orange-primary) ${value}%, var(--color-medium-gray) ${value}%, var(--color-medium-gray) 100%)`;
+    });
+
+    // 选项卡片悬停效果
+    const optionLabels = document.querySelectorAll('.option-label');
+    optionLabels.forEach(label => {
+        label.addEventListener('mouseenter', function() {
+            if (!this.querySelector('input').checked) {
+                this.querySelector('.option-content').style.borderColor = 'var(--color-orange-primary)';
+            }
+        });
+
+        label.addEventListener('mouseleave', function() {
+            if (!this.querySelector('input').checked) {
+                this.querySelector('.option-content').style.borderColor = 'var(--color-medium-gray)';
+            }
+        });
+    });
+
+    // 表单提交处理
+    const settingsForm = document.querySelector('.settings-form');
+    settingsForm.addEventListener('submit', function(e) {
+        // 验证参数范围
+        const similarity = parseFloat(similaritySlider.value);
+        const prune = parseFloat(pruneSlider.value);
+
+        if (similarity < 0.70 || similarity > 0.95) {
+            e.preventDefault();
+            alert('相似度参数应在 0.70 ~ 0.95 范围内');
+            similaritySlider.focus();
+            return false;
+        }
+
+        if (prune < 0.30 || prune > 0.90) {
+            e.preventDefault();
+            alert('剪枝率参数应在 0.30 ~ 0.90 范围内');
+            pruneSlider.focus();
+            return false;
+        }
+
+        // 显示处理中状态
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+        submitBtn.disabled = true;
+
+        // 3秒后恢复（防止重复提交）
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 3000);
+
+        return true;
+    });
+
+    // 添加键盘快捷键
+    document.addEventListener('keydown', function(e) {
+        // 数字键1-6快速选择编码数
+        if (e.key >= '1' && e.key <= '6') {
+            const index = parseInt(e.key) - 1;
+            if (index < numCodesRadios.length) {
+                numCodesRadios[index].checked = true;
+                updateNumCodesValue(numCodesRadios[index].value);
+                updatePreview();
+
+                // 视觉反馈
+                const label = numCodesRadios[index].closest('.option-label');
+                label.querySelector('.option-content').style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    label.querySelector('.option-content').style.transform = 'scale(1)';
+                }, 150);
+            }
+        }
+
+        // Ctrl/Cmd + S 保存参数（模拟）
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            console.log('参数设置已保存（模拟）');
+            // 这里可以添加实际的保存逻辑
+        }
+    });
+
+    // 添加参数预设
+    const presets = {
+        'fast': { similarity: 0.75, prune: 0.70, num_codes: 64 },
+        'balanced': { similarity: 0.85, prune: 0.50, num_codes: 128 },
+        'quality': { similarity: 0.90, prune: 0.40, num_codes: 512 },
+        'max': { similarity: 0.95, prune: 0.30, num_codes: 2048 }
+    };
+
+    // 可以在这里添加预设选择器
+    console.log('参数设置页面加载完成');
+});
+</script>
+{% endblock %}

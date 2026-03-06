@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}页面未找到 - GAUSS3D{% endblock %}
+
+{% block page_title %}迷路了？{% endblock %}
+{% block page_subtitle %}您访问的页面不存在或已被移动{% endblock %}
+
+{% block content %}
+<div class="error-section">
+    <div class="error-content">
+        <div class="error-icon">
+            <i class="fas fa-map-marked-alt"></i>
+        </div>
+        <h1 class="error-code">404</h1>
+        <h2 class="error-message">页面未找到</h2>
+        <p class="error-description">
+            很抱歉，您要查找的页面可能已被移动、删除或暂时不可用。
+            请检查URL是否正确，或使用下方的导航返回。
+        </p>
+
+        <div class="error-actions">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i> 返回首页
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+                <i class="fas fa-tachometer-alt"></i> 控制台
+            </a>
+            <button onclick="window.history.back()" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> 返回上一页
+            </button>
+        </div>
+
+        <div class="error-search">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索页面或功能..." class="search-input">
+                <button onclick="performSearch()" class="search-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <p class="search-hint">
+                或者尝试搜索您需要的内容
+            </p>
+        </div>
+    </div>
+
+    <div class="error-illustration">
+        <div class="illustration-container">
+            <div class="hand-drawn-line" style="top: 20%; left: 10%; width: 60px; transform: rotate(45deg);"></div>
+            <div class="hand-drawn-line" style="top: 30%; right: 15%; width: 80px; transform: rotate(-30deg);"></div>
+            <div class="hand-drawn-circle" style="top: 60%; left: 20%; width: 40px; height: 40px;"></div>
+            <div class="hand-drawn-dot" style="top: 40%; right: 25%; width: 12px; height: 12px;"></div>
+
+            <div class="illustration-main">
+                <div class="map-icon">
+                    <i class="fas fa-map"></i>
+                </div>
+                <div class="compass">
+                    <i class="fas fa-compass"></i>
+                </div>
+                <div class="path path-1"></div>
+                <div class="path path-2"></div>
+                <div class="path path-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: var(--space-xxl);
+}
+
+.error-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.error-illustration {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+}
+
+.error-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-lg);
+}
+
+.error-icon i {
+    font-size: 2.5rem;
+    color: var(--color-orange-primary);
+}
+
+.error-code {
+    font-size: 6rem;
+    font-weight: 900;
+    color: var(--color-dark);
+    margin-bottom: var(--space-sm);
+    line-height: 1;
+    font-family: var(--font-handwritten), cursive;
+}
+
+.error-message {
+    font-size: 2rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-lg);
+}
+
+.error-description {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-xl);
+    max-width: 600px;
+}
+
+.error-actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xxl);
+    flex-wrap: wrap;
+}
+
+.error-search {
+    max-width: 500px;
+}
+
+.search-box {
+    display: flex;
+    margin-bottom: var(--space-sm);
+}
+
+.search-input {
+    flex: 1;
+    padding: var(--space-md) var(--space-lg);
+    border: 2px solid var(--color-medium-gray);
+    border-radius: var(--border-radius-lg) 0 0 var(--border-radius-lg);
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--color-orange-primary);
+}
+
+.search-btn {
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-orange-primary);
+    color: white;
+    border: none;
+    border-radius: 0 var(--border-radius-lg) var(--border-radius-lg) 0;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.search-btn:hover {
+    background: var(--color-orange-dark);
+}
+
+.search-hint {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    text-align: center;
+}
+
+.illustration-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+.illustration-main {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px;
+    height: 250px;
+}
+
+.map-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: float 6s ease-in-out infinite;
+}
+
+.map-icon i {
+    font-size: 5rem;
+    color: var(--color-orange-primary);
+    opacity: 0.7;
+}
+
+.compass {
+    position: absolute;
+    top: 20%;
+    right: 20%;
+    width: 60px;
+    height: 60px;
+    background: var(--color-surface);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    animation: spin 20s linear infinite;
+}
+
+.compass i {
+    font-size: 2rem;
+    color: var(--color-dark);
+}
+
+.path {
+    position: absolute;
+    background: var(--color-orange-primary);
+    opacity: 0.3;
+    border-radius: 10px;
+}
+
+.path-1 {
+    top: 10%;
+    left: 10%;
+    width: 80px;
+    height: 4px;
+    transform: rotate(45deg);
+    animation: pulse 3s ease-in-out infinite;
+}
+
+.path-2 {
+    top: 70%;
+    right: 15%;
+    width: 100px;
+    height: 4px;
+    transform: rotate(-20deg);
+    animation: pulse 3s ease-in-out infinite 1s;
+}
+
+.path-3 {
+    bottom: 20%;
+    left: 15%;
+    width: 60px;
+    height: 4px;
+    transform: rotate(10deg);
+    animation: pulse 3s ease-in-out infinite 2s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-20px); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}
+
+@media (max-width: 1024px) {
+    .error-section {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .error-code {
+        font-size: 5rem;
+    }
+
+    .error-message {
+        font-size: 1.8rem;
+    }
+
+    .error-actions {
+        justify-content: center;
+    }
+
+    .error-search {
+        margin: 0 auto;
+    }
+
+    .illustration-container {
+        height: 300px;
+    }
+}
+</style>
+
+<script>
+function performSearch() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) {
+        alert('请输入搜索内容');
+        return;
+    }
+
+    // 在实际应用中，这里应该连接到搜索功能
+    // 暂时使用简单跳转
+    alert('搜索功能正在开发中，将搜索: ' + query);
+    document.getElementById('searchInput').value = '';
+}
+
+// 输入框回车搜索
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        performSearch();
+    }
+});
+</script>
+{% endblock %}

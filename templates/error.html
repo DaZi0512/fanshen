@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block title %}错误 - GAUSS3D{% endblock %}
+
+{% block page_title %}哎呀，出错了{% endblock %}
+{% block page_subtitle %}系统遇到了一些问题，但我们会尽力解决{% endblock %}
+
+{% block content %}
+<div class="error-section">
+    <div class="error-content">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h1 class="error-code">{{ error_code if error_code else 'Oops!' }}</h1>
+        <h2 class="error-message">{{ error_message if error_message else '发生错误' }}</h2>
+        <p class="error-description">
+            {{ error_description if error_description else '系统在处理您的请求时遇到了问题。请稍后重试，或联系技术支持。' }}
+        </p>
+
+        <div class="error-actions">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i> 返回首页
+            </a>
+            <button onclick="window.history.back()" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> 返回上一页
+            </button>
+            <a href="javascript:void(0)" onclick="showHelp()" class="btn btn-outline">
+                <i class="fas fa-question-circle"></i> 获取帮助
+            </a>
+        </div>
+
+        <div class="error-help" id="errorHelp" style="display: none;">
+            <h4><i class="fas fa-hands-helping"></i> 获取帮助的途径：</h4>
+            <div class="help-options">
+                <div class="help-option">
+                    <div class="help-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="help-content">
+                        <h5>查看帮助文档</h5>
+                        <p>访问我们的在线文档，查找常见问题解答和使用指南。</p>
+                        <a href="#" class="link">打开帮助文档 →</a>
+                    </div>
+                </div>
+                <div class="help-option">
+                    <div class="help-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="help-content">
+                        <h5>社区支持</h5>
+                        <p>加入我们的用户社区，与其他用户讨论问题，分享经验。</p>
+                        <a href="#" class="link">加入社区 →</a>
+                    </div>
+                </div>
+                <div class="help-option">
+                    <div class="help-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <div class="help-content">
+                        <h5>联系技术支持</h5>
+                        <p>如果问题持续存在，请通过邮件或工单系统联系我们的技术支持团队。</p>
+                        <a href="mailto:support@gauss3d.com" class="link">发送邮件 →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="error-tips">
+            <h4><i class="fas fa-lightbulb"></i> 尝试以下步骤：</h4>
+            <div class="tip-steps">
+                <div class="tip-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h5>刷新页面</h5>
+                        <p>可能是临时性问题，刷新页面可能会解决。</p>
+                    </div>
+                </div>
+                <div class="tip-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h5>检查网络</h5>
+                        <p>确保您的网络连接正常，没有防火墙或代理限制。</p>
+                    </div>
+                </div>
+                <div class="tip-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h5>清除缓存</h5>
+                        <p>清除浏览器缓存和Cookie，然后重新登录。</p>
+                    </div>
+                </div>
+                <div class="tip-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h5>检查URL</h5>
+                        <p>确认您访问的URL正确，没有拼写错误。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="error-illustration">
+        <div class="illustration-container">
+            <div class="hand-drawn-line" style="top: 10%; left: 20%; width: 65px; transform: rotate(30deg);"></div>
+            <div class="hand-drawn-line" style="top: 35%; right: 15%; width: 85px; transform: rotate(-25deg);"></div>
+            <div class="hand-drawn-circle" style="top: 70%; left: 15%; width: 45px; height: 45px;"></div>
+            <div class="hand-drawn-dot" style="top: 45%; right: 25%; width: 14px; height: 14px;"></div>
+
+            <div class="illustration-main">
+                <div class="warning-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="bubble bubble-1"></div>
+                <div class="bubble bubble-2"></div>
+                <div class="bubble bubble-3"></div>
+                <div class="pulse pulse-1"></div>
+                <div class="pulse pulse-2"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: var(--space-xxl);
+}
+
+.error-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.error-illustration {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+}
+
+.error-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-lg);
+}
+
+.error-icon i {
+    font-size: 2.5rem;
+    color: var(--color-warning);
+}
+
+.error-code {
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--color-dark);
+    margin-bottom: var(--space-sm);
+    line-height: 1;
+    font-family: var(--font-handwritten), cursive;
+}
+
+.error-message {
+    font-size: 1.8rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-lg);
+}
+
+.error-description {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-xl);
+    max-width: 600px;
+}
+
+.error-actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.error-help {
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-xl);
+    margin-bottom: var(--space-xl);
+    border: 1px solid var(--color-medium-gray);
+}
+
+.error-help h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: 0;
+    margin-bottom: var(--space-xl);
+    color: var(--color-text-primary);
+}
+
+.help-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+}
+
+.help-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--space-lg);
+    background: white;
+    border-radius: var(--border-radius-md);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.help-option:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.help-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-lg);
+}
+
+.help-icon i {
+    font-size: 1.8rem;
+    color: var(--color-orange-primary);
+}
+
+.help-content h5 {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.help-content p {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+    margin-bottom: var(--space-md);
+}
+
+.help-content .link {
+    color: var(--color-orange-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.help-content .link:hover {
+    text-decoration: underline;
+}
+
+.error-tips {
+    background: rgba(76, 175, 80, 0.05);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-xl);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.error-tips h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: 0;
+    margin-bottom: var(--space-xl);
+    color: var(--color-text-primary);
+}
+
+.tip-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-lg);
+}
+
+.tip-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: var(--color-orange-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+}
+
+.step-content h5 {
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.step-content p {
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+}
+
+.illustration-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+.illustration-main {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px;
+    height: 250px;
+}
+
+.warning-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: bounce 4s ease-in-out infinite;
+}
+
+.warning-icon i {
+    font-size: 5rem;
+    color: var(--color-warning);
+    opacity: 0.8;
+}
+
+.bubble {
+    position: absolute;
+    background: rgba(255, 107, 53, 0.2);
+    border-radius: 50%;
+    animation: float 6s ease-in-out infinite;
+}
+
+.bubble-1 {
+    top: 20%;
+    left: 20%;
+    width: 40px;
+    height: 40px;
+    animation-delay: 0s;
+}
+
+.bubble-2 {
+    top: 60%;
+    right: 20%;
+    width: 30px;
+    height: 30px;
+    animation-delay: 2s;
+}
+
+.bubble-3 {
+    bottom: 20%;
+    left: 30%;
+    width: 25px;
+    height: 25px;
+    animation-delay: 4s;
+}
+
+.pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    border: 2px solid rgba(255, 107, 53, 0.3);
+    border-radius: 50%;
+    animation: pulse 3s ease-out infinite;
+}
+
+.pulse-2 {
+    animation-delay: 1s;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translate(-50%, -50%); }
+    50% { transform: translate(-50%, -55%); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+@media (max-width: 1200px) {
+    .help-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tip-steps {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .error-section {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .error-code {
+        font-size: 3.5rem;
+    }
+
+    .error-message {
+        font-size: 1.6rem;
+    }
+
+    .error-actions {
+        justify-content: center;
+    }
+
+    .help-options {
+        grid-template-columns: 1fr;
+    }
+
+    .tip-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .illustration-container {
+        height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .help-option, .tip-step {
+        text-align: left;
+        align-items: flex-start;
+        flex-direction: row;
+        gap: var(--space-md);
+    }
+
+    .help-icon {
+        flex-shrink: 0;
+        margin-bottom: 0;
+    }
+
+    .step-number {
+        flex-shrink: 0;
+        margin-bottom: 0;
+    }
+}
+</style>
+
+<script>
+function showHelp() {
+    const helpSection = document.getElementById('errorHelp');
+    if (helpSection.style.display === 'none' || helpSection.style.display === '') {
+        helpSection.style.display = 'block';
+        helpSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        helpSection.style.display = 'none';
+    }
+}
+
+// 帮助选项链接处理
+document.querySelectorAll('.help-option .link').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const action = this.closest('.help-option').querySelector('h5').textContent;
+        alert('感谢您的点击！' + action + '功能正在开发中，将为您连接到相应资源。');
+    });
+});
+</script>
+{% endblock %}

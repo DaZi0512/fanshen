@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block title %}服务器错误 - GAUSS3D{% endblock %}
+
+{% block page_title %}出了点问题{% endblock %}
+{% block page_subtitle %}服务器遇到了内部错误，我们的工程师正在处理{% endblock %}
+
+{% block content %}
+<div class="error-section">
+    <div class="error-content">
+        <div class="error-icon">
+            <i class="fas fa-server"></i>
+        </div>
+        <h1 class="error-code">500</h1>
+        <h2 class="error-message">服务器内部错误</h2>
+        <p class="error-description">
+            抱歉，服务器在处理您的请求时遇到了意外错误。
+            这可能是暂时性的问题，我们的系统已自动记录此错误。
+        </p>
+
+        <div class="error-actions">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i> 返回首页
+            </a>
+            <button onclick="location.reload()" class="btn btn-outline">
+                <i class="fas fa-redo"></i> 重新加载
+            </button>
+            <a href="mailto:support@gauss3d.com" class="btn btn-outline">
+                <i class="fas fa-envelope"></i> 联系支持
+            </a>
+        </div>
+
+        <div class="error-details">
+            <div class="details-header" onclick="toggleDetails()">
+                <h4>
+                    <i class="fas fa-info-circle"></i>
+                    技术详情（仅调试模式显示）
+                </h4>
+                <i class="fas fa-chevron-down" id="detailsArrow"></i>
+            </div>
+            <div class="details-content" id="detailsContent">
+                <pre><code>Error ID: {{ error_id if error_id else 'SERVER-' + now|string|replace(' ', '')|replace('-', '')|replace(':', '')[:10] }}
+Time: {{ now.strftime('%Y-%m-%d %H:%M:%S') if now else 'Unknown' }}
+Request Path: {{ request.path if request else 'Unknown' }}
+Method: {{ request.method if request else 'Unknown' }}</code></pre>
+                <p class="details-note">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    注意：这些信息仅用于调试，重启应用可能解决此问题。
+                </p>
+            </div>
+        </div>
+
+        <div class="recovery-tips">
+            <h4><i class="fas fa-lightbulb"></i> 您可以尝试：</h4>
+            <ul>
+                <li>等待几分钟后重试，可能是临时性问题</li>
+                <li>检查您的网络连接是否正常</li>
+                <li>清除浏览器缓存和Cookie</li>
+                <li>如果您是系统管理员，请检查服务器日志</li>
+                <li>联系技术支持提供错误ID</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="error-illustration">
+        <div class="illustration-container">
+            <div class="hand-drawn-line" style="top: 15%; left: 15%; width: 70px; transform: rotate(20deg);"></div>
+            <div class="hand-drawn-line" style="top: 25%; right: 10%; width: 90px; transform: rotate(-15deg);"></div>
+            <div class="hand-drawn-circle" style="top: 65%; left: 25%; width: 35px; height: 35px;"></div>
+            <div class="hand-drawn-dot" style="top: 45%; right: 30%; width: 10px; height: 10px;"></div>
+
+            <div class="illustration-main">
+                <div class="server-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="gear gear-1">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="gear gear-2">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="spark spark-1"></div>
+                <div class="spark spark-2"></div>
+                <div class="spark spark-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: var(--space-xxl);
+}
+
+.error-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.error-illustration {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+}
+
+.error-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(244, 67, 54, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-lg);
+}
+
+.error-icon i {
+    font-size: 2.5rem;
+    color: var(--color-error);
+}
+
+.error-code {
+    font-size: 6rem;
+    font-weight: 900;
+    color: var(--color-dark);
+    margin-bottom: var(--space-sm);
+    line-height: 1;
+    font-family: var(--font-handwritten), cursive;
+}
+
+.error-message {
+    font-size: 2rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-lg);
+}
+
+.error-description {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-xl);
+    max-width: 600px;
+}
+
+.error-actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.error-details {
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-medium-gray);
+    margin-bottom: var(--space-xl);
+    overflow: hidden;
+}
+
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) var(--space-lg);
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.02);
+    border-bottom: 1px solid var(--color-medium-gray);
+}
+
+.details-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.details-header i {
+    color: var(--color-orange-primary);
+}
+
+.details-content {
+    padding: var(--space-lg);
+    display: none;
+}
+
+.details-content pre {
+    background: var(--color-dark);
+    color: var(--color-text-on-dark);
+    padding: var(--space-lg);
+    border-radius: var(--border-radius-md);
+    overflow-x: auto;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: var(--space-lg);
+}
+
+.details-note {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+}
+
+.details-note i {
+    color: var(--color-warning);
+}
+
+.recovery-tips {
+    background: rgba(33, 150, 243, 0.05);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    border: 1px solid rgba(33, 150, 243, 0.2);
+}
+
+.recovery-tips h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: 0;
+    margin-bottom: var(--space-md);
+    color: var(--color-text-primary);
+}
+
+.recovery-tips ul {
+    margin: 0;
+    padding-left: var(--space-lg);
+}
+
+.recovery-tips li {
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--space-sm);
+}
+
+.recovery-tips li:last-child {
+    margin-bottom: 0;
+}
+
+.illustration-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+.illustration-main {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px;
+    height: 250px;
+}
+
+.server-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    background: rgba(244, 67, 54, 0.1);
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: shake 3s ease-in-out infinite;
+}
+
+.server-icon i {
+    font-size: 5rem;
+    color: var(--color-error);
+    opacity: 0.7;
+}
+
+.gear {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: var(--color-surface);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.gear i {
+    font-size: 2rem;
+    color: var(--color-dark);
+}
+
+.gear-1 {
+    top: 20%;
+    right: 25%;
+    animation: spin 10s linear infinite;
+}
+
+.gear-2 {
+    bottom: 25%;
+    left: 20%;
+    animation: spin-reverse 8s linear infinite;
+}
+
+.spark {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--color-orange-primary);
+    border-radius: 50%;
+    animation: sparkle 1.5s ease-in-out infinite;
+}
+
+.spark-1 {
+    top: 30%;
+    left: 30%;
+    animation-delay: 0s;
+}
+
+.spark-2 {
+    top: 50%;
+    right: 30%;
+    animation-delay: 0.5s;
+}
+
+.spark-3 {
+    bottom: 30%;
+    left: 40%;
+    animation-delay: 1s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    10%, 30%, 50%, 70%, 90% { transform: translate(-50%, -50%) rotate(-2deg); }
+    20%, 40%, 60%, 80% { transform: translate(-50%, -50%) rotate(2deg); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(-360deg); }
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 1024px) {
+    .error-section {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .error-code {
+        font-size: 5rem;
+    }
+
+    .error-message {
+        font-size: 1.8rem;
+    }
+
+    .error-actions {
+        justify-content: center;
+    }
+
+    .error-details, .recovery-tips {
+        text-align: left;
+    }
+
+    .illustration-container {
+        height: 300px;
+    }
+}
+</style>
+
+<script>
+function toggleDetails() {
+    const content = document.getElementById('detailsContent');
+    const arrow = document.getElementById('detailsArrow');
+
+    if (content.style.display === 'block') {
+        content.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+    } else {
+        content.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+    }
+}
+
+// 初始隐藏详细信息
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('detailsContent').style.display = 'none';
+});
+
+// 刷新按钮点击处理
+document.querySelector('button[onclick="location.reload()"]').addEventListener('click', function(e) {
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 刷新中...';
+    btn.disabled = true;
+
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+});
+</script>
+{% endblock %}

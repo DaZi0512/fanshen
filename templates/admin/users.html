@@ -1,0 +1,788 @@
+{% extends "base.html" %}
+
+{% block title %}用户管理 - GAUSS3D{% endblock %}
+
+{% block page_title %}系统管理控制台{% endblock %}
+{% block page_subtitle %}管理用户账户和监控系统使用情况{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ users|length }}</h3>
+                <p class="stat-label">注册用户</p>
+            </div>
+            <div class="stat-decoration">
+                <div class="hand-drawn-circle" style="width: 20px; height: 20px; top: 10px; right: 15px;"></div>
+                <div class="hand-drawn-dot" style="width: 8px; height: 8px; bottom: 15px; left: 20px;"></div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ tasks|length }}</h3>
+                <p class="stat-label">最近任务</p>
+            </div>
+            <div class="stat-decoration">
+                <div class="hand-drawn-line" style="width: 40px; top: 15px; right: 10px; transform: rotate(45deg);"></div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ (users|length / 7)|round(1) if users|length > 0 else 0 }}</h3>
+                <p class="stat-label">日活跃率</p>
+            </div>
+            <div class="stat-decoration">
+                <div class="hand-drawn-dot" style="width: 10px; height: 10px; top: 20px; left: 15px;"></div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ tasks|selectattr('before_mb')|map('float')|sum|round(1) if tasks else 0 }}</h3>
+                <p class="stat-label">总处理数据(MB)</p>
+            </div>
+            <div class="stat-decoration">
+                <div class="hand-drawn-line" style="width: 30px; bottom: 10px; right: 20px; transform: rotate(-30deg);"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-content">
+        <!-- 用户管理 -->
+        <div class="admin-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-users-cog"></i>
+                    <h2>用户管理</h2>
+                </div>
+                <div class="section-actions">
+                    <button class="btn btn-outline" onclick="exportUsers()">
+                        <i class="fas fa-file-export"></i> 导出用户列表
+                    </button>
+                </div>
+            </div>
+
+            {% if users %}
+            <div class="users-grid">
+                {% for user in users %}
+                <div class="user-card">
+                    <div class="user-header">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="user-info">
+                            <h4 class="username">{{ user.username }}</h4>
+                            <p class="user-email">{{ user.email }}</p>
+                        </div>
+                        <div class="user-id">ID: {{ user.id }}</div>
+                    </div>
+
+                    <div class="user-details">
+                        <div class="detail-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>注册时间：{{ user.created_at|datetimeformat }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-id-card"></i>
+                            <span>用户ID：{{ user.id }}</span>
+                        </div>
+                    </div>
+
+                    <div class="user-actions">
+                        <a href="{{ url_for('delete_user', user_id=user.id) }}"
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirmDelete('{{ user.username }}')">
+                            <i class="fas fa-trash"></i> 删除用户
+                        </a>
+                        <button class="btn btn-outline btn-sm" onclick="showUserDetails({{ user.id }})">
+                            <i class="fas fa-eye"></i> 查看详情
+                        </button>
+                    </div>
+
+                    <div class="user-decoration">
+                        <div class="hand-drawn-dot" style="width: 6px; height: 6px; top: 10px; right: 10px;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+                <h3>暂无用户</h3>
+                <p>系统尚未有注册用户，用户注册后将在此显示。</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 最近任务 -->
+        <div class="admin-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-history"></i>
+                    <h2>最近压缩任务</h2>
+                </div>
+                <div class="section-actions">
+                    <a href="{{ url_for('logs') }}" class="btn btn-outline">
+                        <i class="fas fa-list-alt"></i> 查看完整日志
+                    </a>
+                </div>
+            </div>
+
+            {% if tasks %}
+            <div class="tasks-table-container">
+                <table class="tasks-table">
+                    <thead>
+                        <tr>
+                            <th>任务ID</th>
+                            <th>用户</th>
+                            <th>模型</th>
+                            <th>参数</th>
+                            <th>压缩比</th>
+                            <th>质量指标</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td class="task-id">#{{ task.id }}</td>
+                            <td class="task-user">{{ task.username }}</td>
+                            <td class="task-model">{{ task.model_name|truncate(20) }}</td>
+                            <td class="task-params">
+                                <div class="params-tags">
+                                    <span class="tag">相似度: {{ task.similarity }}</span>
+                                    <span class="tag">剪枝: {{ task.prune }}</span>
+                                    <span class="tag">编码: {{ task.num_codes }}</span>
+                                </div>
+                            </td>
+                            <td class="task-ratio">
+                                <div class="ratio-display">
+                                    <span class="ratio-value">{{ "%.2f"|format(task.ratio) if task.ratio else "N/A" }}x</span>
+                                    <div class="ratio-bar">
+                                        <div class="ratio-fill" style="width: {{ min(task.ratio * 10, 100) if task.ratio else 0 }}%"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="task-metrics">
+                                <div class="metrics-grid">
+                                    <div class="metric">
+                                        <span class="metric-label">PSNR</span>
+                                        <span class="metric-value">{{ "%.2f"|format(task.psnr) if task.psnr else "N/A" }}</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">SSIM</span>
+                                        <span class="metric-value">{{ "%.3f"|format(task.ssim) if task.ssim else "N/A" }}</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">LPIPS</span>
+                                        <span class="metric-value">{{ "%.3f"|format(task.lpips) if task.lpips else "N/A" }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="task-time">{{ task.created_at|datetimeformat }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3>暂无任务</h3>
+                <p>系统尚未执行压缩任务，用户开始使用后将在此显示。</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 系统工具 -->
+        <div class="admin-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-tools"></i>
+                    <h2>系统工具</h2>
+                </div>
+            </div>
+
+            <div class="tools-grid">
+                <div class="tool-card">
+                    <div class="tool-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h4>数据库备份</h4>
+                        <p>备份系统数据库到安全位置</p>
+                    </div>
+                    <button class="tool-action" onclick="backupDatabase()">
+                        <i class="fas fa-download"></i> 备份
+                    </button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h4>清理临时文件</h4>
+                        <p>删除上传的临时文件和过期缓存</p>
+                    </div>
+                    <button class="tool-action" onclick="cleanTempFiles()">
+                        <i class="fas fa-broom"></i> 清理
+                    </button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h4>生成报告</h4>
+                        <p>生成系统使用统计报告</p>
+                    </div>
+                    <button class="tool-action" onclick="generateReport()">
+                        <i class="fas fa-file-alt"></i> 生成
+                    </button>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                    <div class="tool-content">
+                        <h4>退出管理</h4>
+                        <p>安全退出管理员登录</p>
+                    </div>
+                    <a href="{{ url_for('admin_logout') }}" class="tool-action">
+                        <i class="fas fa-sign-out-alt"></i> 退出
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* 统计卡片 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xxl);
+}
+
+.stat-card {
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--color-medium-gray);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-icon i {
+    font-size: 1.8rem;
+    color: var(--color-orange-primary);
+}
+
+.stat-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--color-dark);
+    margin: 0;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.95rem;
+    color: var(--color-text-tertiary);
+    margin-top: var(--space-xs);
+}
+
+.stat-decoration {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+/* 用户管理 */
+.admin-section {
+    margin-bottom: var(--space-xxl);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.section-title i {
+    font-size: 1.5rem;
+    color: var(--color-orange-primary);
+}
+
+.section-title h2 {
+    font-size: 1.5rem;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-lg);
+}
+
+.user-card {
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    border: 1px solid var(--color-medium-gray);
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.user-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.user-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    background: rgba(33, 150, 243, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-avatar i {
+    font-size: 1.8rem;
+    color: #2196F3;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.username {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-xs) 0;
+    font-weight: 600;
+}
+
+.user-email {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    margin: 0;
+    word-break: break-all;
+}
+
+.user-id {
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+    background: var(--color-lighter-gray);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--border-radius-sm);
+}
+
+.user-details {
+    margin-bottom: var(--space-lg);
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-sm);
+}
+
+.detail-item i {
+    color: var(--color-orange-primary);
+    width: 16px;
+}
+
+.user-actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.btn-sm {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.85rem;
+}
+
+/* 任务表格 */
+.tasks-table-container {
+    overflow-x: auto;
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-medium-gray);
+}
+
+.tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+}
+
+.tasks-table th {
+    padding: var(--space-lg);
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--color-medium-gray);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.tasks-table td {
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--color-lighter-gray);
+    color: var(--color-text-secondary);
+}
+
+.tasks-table tr:last-child td {
+    border-bottom: none;
+}
+
+.tasks-table tr:hover {
+    background: rgba(255, 107, 53, 0.02);
+}
+
+.params-tags {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(33, 150, 243, 0.1);
+    color: #2196F3;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.ratio-display {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.ratio-value {
+    font-weight: 600;
+    color: var(--color-dark);
+    min-width: 50px;
+}
+
+.ratio-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--color-lighter-gray);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ratio-fill {
+    height: 100%;
+    background: var(--color-orange-primary);
+    border-radius: 3px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-sm);
+}
+
+.metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+    margin-bottom: 2px;
+}
+
+.metric-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+/* 系统工具 */
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--space-lg);
+}
+
+.tool-card {
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    border: 1px solid var(--color-medium-gray);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.tool-card:hover {
+    transform: translateY(-4px);
+}
+
+.tool-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-lg);
+}
+
+.tool-icon i {
+    font-size: 1.8rem;
+    color: var(--color-success);
+}
+
+.tool-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.tool-content h4 {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.tool-content p {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+    margin-bottom: var(--space-lg);
+}
+
+.tool-action {
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--color-orange-primary);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    transition: background 0.2s;
+    text-decoration: none;
+}
+
+.tool-action:hover {
+    background: var(--color-orange-dark);
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: var(--space-xxl);
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-medium-gray);
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-lg) auto;
+}
+
+.empty-icon i {
+    font-size: 2.5rem;
+    color: var(--color-text-tertiary);
+}
+
+.empty-state h3 {
+    font-size: 1.3rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-md);
+}
+
+.empty-state p {
+    color: var(--color-text-tertiary);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+
+    .users-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tools-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+function confirmDelete(username) {
+    return confirm(`确定要删除用户 "${username}" 吗？此操作将永久删除该用户的所有数据且无法恢复。`);
+}
+
+function showUserDetails(userId) {
+    alert(`查看用户ID: ${userId} 的详细信息功能正在开发中。`);
+}
+
+function exportUsers() {
+    alert('导出用户列表功能正在开发中，将生成包含所有用户信息的Excel文件。');
+}
+
+function backupDatabase() {
+    if (confirm('确定要备份数据库吗？这可能需要一些时间。')) {
+        alert('数据库备份功能正在开发中。');
+    }
+}
+
+function cleanTempFiles() {
+    if (confirm('确定要清理所有临时文件吗？这可能会删除用户的上传文件。')) {
+        alert('清理临时文件功能正在开发中。');
+    }
+}
+
+function generateReport() {
+    alert('生成报告功能正在开发中，将创建系统使用统计报告。');
+}
+
+// 初始化手绘装饰元素
+document.addEventListener('DOMContentLoaded', function() {
+    // 为每个用户卡添加随机的手绘元素
+    document.querySelectorAll('.user-card').forEach(card => {
+        const decoration = card.querySelector('.user-decoration');
+        if (decoration) {
+            // 随机添加更多手绘元素
+            const types = ['line', 'circle', 'dot'];
+            const type = types[Math.floor(Math.random() * types.length)];
+
+            const newElement = document.createElement('div');
+            newElement.className = `hand-drawn-${type}`;
+
+            const size = type === 'line' ? Math.random() * 30 + 20 : Math.random() * 8 + 4;
+            const top = Math.random() * 80;
+            const left = Math.random() * 80;
+            const rotation = type === 'line' ? Math.random() * 180 - 90 : 0;
+
+            newElement.style.cssText = `
+                width: ${type === 'line' ? size + 'px' : size + 'px'};
+                height: ${type === 'line' ? '2px' : size + 'px'};
+                top: ${top}%;
+                left: ${left}%;
+                transform: rotate(${rotation}deg);
+            `;
+
+            decoration.appendChild(newElement);
+        }
+    });
+});
+</script>
+{% endblock %}

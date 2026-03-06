@@ -1,0 +1,1431 @@
+{% extends "base.html" %}
+
+{% block title %}压缩结果 - GAUSS3D{% endblock %}
+
+{% block page_title %}压缩任务完成！{% endblock %}
+{% block page_subtitle %}任务 #{{ run.id }} - {{ run.model_name }} 的压缩结果已生成{% endblock %}
+
+{% block content %}
+<div class="result-section">
+    <!-- 任务概览 -->
+    <div class="result-overview">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-check-circle"></i>
+                    任务概览
+                </div>
+                <div class="card-badge">
+                    <span class="badge badge-success">已完成</span>
+                </div>
+            </div>
+
+            <div class="card-content">
+                <div class="overview-grid">
+                    <div class="overview-item">
+                        <div class="overview-icon">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <div class="overview-content">
+                            <h4>模型名称</h4>
+                            <p>{{ run.model_name }}</p>
+                        </div>
+                    </div>
+
+                    <div class="overview-item">
+                        <div class="overview-icon">
+                            <i class="fas fa-calendar"></i>
+                        </div>
+                        <div class="overview-content">
+                            <h4>完成时间</h4>
+                            <p>{{ run.created_at|datetimeformat }}</p>
+                        </div>
+                    </div>
+
+                    <div class="overview-item">
+                        <div class="overview-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="overview-content">
+                            <h4>执行用户</h4>
+                            <p>{{ session.username }}</p>
+                        </div>
+                    </div>
+
+                    <div class="overview-item">
+                        <div class="overview-icon">
+                            <i class="fas fa-hashtag"></i>
+                        </div>
+                        <div class="overview-content">
+                            <h4>任务ID</h4>
+                            <p><code>#{{ run.id }}</code></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-metrics">
+            <!-- 压缩指标 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-chart-bar"></i>
+                        压缩指标
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-compress-arrows-alt"></i>
+                            </div>
+                            <div class="metric-value">
+                                {{ "%.2f"|format(run.ratio) }}<span class="metric-unit">:1</span>
+                            </div>
+                            <div class="metric-label">压缩比</div>
+                            <div class="metric-description">
+                                原始大小：{{ "%.1f"|format(run.before_mb) }} MB<br>
+                                压缩后：{{ "%.1f"|format(run.after_mb) }} MB
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                            <div class="metric-value">
+                                {{ "%.2f"|format(run.psnr) }}<span class="metric-unit"> dB</span>
+                            </div>
+                            <div class="metric-label">PSNR</div>
+                            <div class="metric-description">
+                                峰值信噪比<br>
+                                <span class="metric-rating {% if run.psnr > 35 %}rating-excellent{% elif run.psnr > 30 %}rating-good{% else %}rating-fair{% endif %}">
+                                    {% if run.psnr > 35 %}优秀
+                                    {% elif run.psnr > 30 %}良好
+                                    {% else %}一般{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="metric-value">
+                                {{ "%.3f"|format(run.ssim) }}
+                            </div>
+                            <div class="metric-label">SSIM</div>
+                            <div class="metric-description">
+                                结构相似性指数<br>
+                                <span class="metric-rating {% if run.ssim > 0.9 %}rating-excellent{% elif run.ssim > 0.8 %}rating-good{% else %}rating-fair{% endif %}">
+                                    {% if run.ssim > 0.9 %}优秀
+                                    {% elif run.ssim > 0.8 %}良好
+                                    {% else %}一般{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-ruler"></i>
+                            </div>
+                            <div class="metric-value">
+                                {{ "%.3f"|format(run.lpips) }}
+                            </div>
+                            <div class="metric-label">LPIPS</div>
+                            <div class="metric-description">
+                                感知相似性<br>
+                                <span class="metric-rating {% if run.lpips < 0.1 %}rating-excellent{% elif run.lpips < 0.2 %}rating-good{% else %}rating-fair{% endif %}">
+                                    {% if run.lpips < 0.1 %}优秀
+                                    {% elif run.lpips < 0.2 %}良好
+                                    {% else %}一般{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="metric-value">
+                                {{ "%.1f"|format(run.duration) }}<span class="metric-unit"> s</span>
+                            </div>
+                            <div class="metric-label">处理时间</div>
+                            <div class="metric-description">
+                                压缩算法执行时间
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="metric-value">
+                                {{ "%.1f"|format((1 - run.after_mb / run.before_mb) * 100) }}<span class="metric-unit">%</span>
+                            </div>
+                            <div class="metric-label">体积减少</div>
+                            <div class="metric-description">
+                                相比原始模型
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 参数设置 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-sliders-h"></i>
+                        使用的参数
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="params-grid">
+                        <div class="param-item">
+                            <div class="param-label">
+                                <i class="fas fa-balance-scale"></i>
+                                相似度阈值
+                            </div>
+                            <div class="param-value">
+                                {{ "%.2f"|format(run.similarity) }}
+                            </div>
+                            <div class="param-bar">
+                                <div class="bar-fill" style="width: {{ ((run.similarity - 0.70) / 0.25) * 100 }}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="param-item">
+                            <div class="param-label">
+                                <i class="fas fa-cut"></i>
+                                剪枝率
+                            </div>
+                            <div class="param-value">
+                                {{ "%.2f"|format(run.prune) }}
+                            </div>
+                            <div class="param-bar">
+                                <div class="bar-fill" style="width: {{ ((run.prune - 0.30) / 0.60) * 100 }}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="param-item">
+                            <div class="param-label">
+                                <i class="fas fa-code"></i>
+                                编码数量
+                            </div>
+                            <div class="param-value">
+                                {{ run.num_codes }}
+                            </div>
+                            <div class="param-bar">
+                                <div class="bar-fill" style="width: {{ (run.num_codes / 2048) * 100 }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-visualizations">
+            <!-- 可视化结果 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-images"></i>
+                        可视化结果
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    {% if visualizations %}
+                        <div class="visualization-grid">
+                            {% for viz in visualizations %}
+                            <div class="visualization-item">
+                                <div class="visualization-image">
+                                    <img src="{{ viz.url }}" alt="{{ viz.name }}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"300\" height=\"200\"><rect width=\"300\" height=\"200\" fill=\"%23222222\"/><text x=\"50%\" y=\"50%\" text-anchor=\"middle\" dy=\"0.3em\" fill=\"%23FF6B35\" font-family=\"Arial\" font-size=\"16\">Visualization {{ loop.index }}</text></svg>'">
+                                </div>
+                                <div class="visualization-info">
+                                    <div class="visualization-name">
+                                        {% if loop.index == 1 %}
+                                            原始渲染
+                                        {% elif loop.index == 2 %}
+                                            压缩后渲染
+                                        {% elif loop.index == 3 %}
+                                            深度图
+                                        {% elif loop.index == 4 %}
+                                            深度中位图
+                                        {% else %}
+                                            {{ viz.name }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="visualization-desc">
+                                        {% if loop.index == 1 %}
+                                            原始模型渲染结果
+                                        {% elif loop.index == 2 %}
+                                            压缩后模型渲染结果
+                                        {% elif loop.index == 3 %}
+                                            深度信息可视化
+                                        {% elif loop.index == 4 %}
+                                            深度中位数分析图
+                                        {% else %}
+                                            压缩结果可视化 {{ loop.index }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="visualization-actions mt-4">
+                            <button class="btn btn-secondary" onclick="downloadAllVisualizations()">
+                                <i class="fas fa-download"></i> 下载所有图片
+                            </button>
+                            <button class="btn btn-primary" onclick="viewIn3D()">
+                                <i class="fas fa-cube"></i> 3D查看
+                            </button>
+                            <button class="btn btn-success" onclick="showUploadModal()">
+                                <i class="fas fa-upload"></i> 上传可视化图片
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <h3 class="empty-title">无可视化结果</h3>
+                            <p class="empty-description">
+                                当前压缩任务未生成可视化结果。
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 质量评估 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-star"></i>
+                        质量评估
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="quality-assessment">
+                        <div class="assessment-header">
+                            <h4>总体质量评分</h4>
+                            <div class="assessment-score">
+                                <div class="score-circle">
+                                    <svg width="80" height="80">
+                                        <circle cx="40" cy="40" r="36" stroke="#2D2D2D" stroke-width="8" fill="none"/>
+                                        <circle cx="40" cy="40" r="36" stroke="#FF6B35" stroke-width="8" fill="none"
+                                                stroke-dasharray="{{ (run.psnr / 50 * 226) + (run.ssim * 226) + ((1 - run.lpips) * 226) }} 678"
+                                                stroke-dashoffset="0" stroke-linecap="round"
+                                                transform="rotate(-90 40 40)"/>
+                                        <text x="40" y="45" text-anchor="middle" fill="#FFFFFF" font-size="16" font-weight="bold">
+                                            {{ "%.0f"|format((run.psnr / 50 * 100 + run.ssim * 100 + (1 - run.lpips) * 100) / 3) }}
+                                        </text>
+                                    </svg>
+                                </div>
+                                <div class="score-text">/100</div>
+                            </div>
+                        </div>
+
+                        <div class="assessment-breakdown">
+                            <div class="breakdown-item">
+                                <div class="breakdown-label">PSNR评分</div>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" style="width: {{ (run.psnr / 50) * 100 }}%"></div>
+                                </div>
+                                <div class="breakdown-value">{{ "%.0f"|format(run.psnr / 50 * 100) }}%</div>
+                            </div>
+
+                            <div class="breakdown-item">
+                                <div class="breakdown-label">SSIM评分</div>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" style="width: {{ run.ssim * 100 }}%"></div>
+                                </div>
+                                <div class="breakdown-value">{{ "%.0f"|format(run.ssim * 100) }}%</div>
+                            </div>
+
+                            <div class="breakdown-item">
+                                <div class="breakdown-label">感知质量</div>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" style="width: {{ (1 - run.lpips) * 100 }}%"></div>
+                                </div>
+                                <div class="breakdown-value">{{ "%.0f"|format((1 - run.lpips) * 100) }}%</div>
+                            </div>
+                        </div>
+
+                        <div class="assessment-conclusion">
+                            <h5><i class="fas fa-chart-line"></i> 评估结论</h5>
+                            <p>
+                                {% if run.psnr > 35 and run.ssim > 0.9 and run.lpips < 0.1 %}
+                                    压缩质量优秀！模型在保持高压缩率的同时，视觉效果几乎无损。
+                                {% elif run.psnr > 30 and run.ssim > 0.8 and run.lpips < 0.2 %}
+                                    压缩质量良好。模型在合理的压缩率下保持了良好的视觉质量。
+                                {% else %}
+                                    压缩质量一般。建议调整参数以获得更好的质量或更高的压缩率。
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 下一步操作 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-forward"></i>
+                        下一步操作
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="next-steps">
+                        <div class="step">
+                            <div class="step-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="step-content">
+                                <h5>3D查看</h5>
+                                <p>在3D查看器中预览压缩后的模型效果</p>
+                                <a href="{{ url_for('viewer') }}" class="btn btn-sm btn-secondary">前往查看</a>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div class="step-content">
+                                <h5>查看日志</h5>
+                                <p>查看完整的压缩任务历史记录</p>
+                                <a href="{{ url_for('logs') }}" class="btn btn-sm btn-secondary">查看日志</a>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-icon">
+                                <i class="fas fa-redo"></i>
+                            </div>
+                            <div class="step-content">
+                                <h5>新的压缩</h5>
+                                <p>使用相同或不同参数开始新的压缩任务</p>
+                                <a href="{{ url_for('upload') }}" class="btn btn-sm btn-primary">重新开始</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.result-section {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.badge-success {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--color-success);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-lg);
+}
+
+.overview-item {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+}
+
+.overview-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: var(--border-radius-md);
+    color: var(--color-orange-primary);
+    font-size: 1.3rem;
+}
+
+.overview-content h4 {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    margin-bottom: var(--space-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.overview-content p {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    font-weight: 500;
+    margin: 0;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+}
+
+.col-metrics {
+    min-width: 0;
+}
+
+.col-visualizations {
+    min-width: 0;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+}
+
+.metric-card {
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    text-align: center;
+    border: 1px solid var(--color-medium-gray);
+    transition: all 0.3s;
+}
+
+.metric-card:hover {
+    border-color: var(--color-orange-primary);
+    transform: translateY(-2px);
+}
+
+.metric-icon {
+    font-size: 2rem;
+    color: var(--color-orange-primary);
+    margin-bottom: var(--space-md);
+}
+
+.metric-value {
+    font-family: var(--font-secondary);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+    line-height: 1;
+}
+
+.metric-unit {
+    font-size: 1rem;
+    color: var(--color-orange-primary);
+    font-weight: 500;
+    margin-left: 2px;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: var(--space-md);
+}
+
+.metric-description {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-top: var(--space-sm);
+}
+
+.metric-rating {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: var(--space-xs);
+}
+
+.rating-excellent {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--color-success);
+}
+
+.rating-good {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--color-warning);
+}
+
+.rating-fair {
+    background: rgba(244, 67, 54, 0.1);
+    color: var(--color-error);
+}
+
+.params-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.param-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.param-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-text-primary);
+    font-weight: 500;
+    min-width: 140px;
+}
+
+.param-label i {
+    color: var(--color-orange-primary);
+    width: 20px;
+}
+
+.param-value {
+    font-family: var(--font-secondary);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-orange-primary);
+    min-width: 60px;
+}
+
+.param-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--color-medium-gray);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-orange-primary), var(--color-orange-secondary));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.visualization-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+}
+
+.visualization-item {
+    background: var(--color-surface);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--color-medium-gray);
+    transition: all 0.3s;
+}
+
+.visualization-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-orange-primary);
+}
+
+.visualization-image {
+    width: 100%;
+    height: 150px;
+    background: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.visualization-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.visualization-info {
+    padding: var(--space-md);
+}
+
+.visualization-name {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.visualization-desc {
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+}
+
+.visualization-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+}
+
+.quality-assessment {
+    padding: var(--space-md);
+}
+
+.assessment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+}
+
+.assessment-header h4 {
+    font-size: 1.2rem;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.assessment-score {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.score-circle {
+    position: relative;
+}
+
+.score-text {
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+}
+
+.assessment-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.breakdown-label {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    min-width: 100px;
+}
+
+.breakdown-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--color-medium-gray);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.breakdown-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-orange-primary), var(--color-orange-secondary));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.breakdown-value {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    color: var(--color-orange-primary);
+    min-width: 50px;
+    text-align: right;
+}
+
+.assessment-conclusion {
+    padding: var(--space-md);
+    background: var(--color-surface-light);
+    border-radius: var(--border-radius-md);
+    border-left: 4px solid var(--color-orange-primary);
+}
+
+.assessment-conclusion h5 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.assessment-conclusion p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.next-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.step {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-medium-gray);
+}
+
+.step:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.step-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: var(--border-radius-md);
+    color: var(--color-orange-primary);
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.step-content h5 {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.step-content p {
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: var(--space-sm);
+}
+
+.btn-sm {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: var(--color-orange-primary);
+    opacity: 0.3;
+    margin-bottom: var(--space-lg);
+}
+
+.empty-title {
+    font-family: var(--font-secondary);
+    font-size: 1.5rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.empty-description {
+    color: var(--color-text-tertiary);
+    max-width: 300px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.mt-4 { margin-top: var(--space-lg); }
+.mt-5 { margin-top: var(--space-xl); }
+
+@media (max-width: 1200px) {
+    .row {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+    }
+}
+
+@media (max-width: 768px) {
+    .result-section {
+        padding: 0;
+    }
+
+    .overview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .visualization-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .param-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .param-bar {
+        width: 100%;
+    }
+
+    .visualization-actions {
+        flex-direction: column;
+    }
+
+    .assessment-header {
+        flex-direction: column;
+        gap: var(--space-md);
+        text-align: center;
+    }
+
+    .breakdown-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .breakdown-bar {
+        width: 100%;
+    }
+
+    .step {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+
+    .step-content {
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .overview-item {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('压缩结果页面加载完成，任务ID:', {{ run.id }});
+
+    // 指标卡片动画
+    const metricCards = document.querySelectorAll('.metric-card');
+    metricCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // 参数进度条动画
+    const barFills = document.querySelectorAll('.bar-fill');
+    barFills.forEach(bar => {
+        const originalWidth = bar.style.width;
+        bar.style.width = '0%';
+
+        setTimeout(() => {
+            bar.style.transition = 'width 1s ease-out';
+            bar.style.width = originalWidth;
+        }, 500);
+    });
+
+    // 质量评分圆圈动画
+    const scoreCircle = document.querySelector('.score-circle circle:nth-child(2)');
+    if (scoreCircle) {
+        const dashArray = scoreCircle.getAttribute('stroke-dasharray').split(' ')[0];
+        scoreCircle.style.strokeDasharray = '0 678';
+
+        setTimeout(() => {
+            scoreCircle.style.transition = 'stroke-dasharray 1.5s ease-out';
+            scoreCircle.style.strokeDasharray = dashArray + ' 678';
+        }, 800);
+    }
+
+    // 下载所有可视化图片
+    window.downloadAllVisualizations = function() {
+        alert('在实际应用中，这里会打包并下载所有可视化图片');
+        // 这里可以实现实际的下载逻辑
+        // 例如：创建一个zip文件包含所有图片
+    };
+
+    // 3D查看
+    window.viewIn3D = function() {
+        window.location.href = "{{ url_for('viewer') }}";
+    };
+
+    // 显示上传模态框
+    window.showUploadModal = function() {
+        const modal = document.createElement('div');
+        modal.className = 'upload-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-upload"></i> 上传可视化图片</h3>
+                    <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>选择可视化图片并指定对应的可视化类型（1-4）：</p>
+
+                    <div class="upload-form">
+                        <div class="form-group">
+                            <label for="visIndex"><i class="fas fa-hashtag"></i> 可视化类型</label>
+                            <select id="visIndex" class="form-select">
+                                <option value="1">1 - 原始渲染</option>
+                                <option value="2">2 - 压缩后渲染</option>
+                                <option value="3">3 - 深度图</option>
+                                <option value="4">4 - 深度中位图</option>
+                            </select>
+                            <small class="form-text">选择要替换的可视化图片类型</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="visFile"><i class="fas fa-image"></i> 选择图片文件</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="visFile" class="file-input" accept=".png,.jpg,.jpeg,.gif,.bmp,.tiff">
+                                <div class="file-dropzone" id="fileDropzone">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>拖放图片文件到这里，或点击选择文件</p>
+                                    <span class="file-hint">支持格式: PNG, JPG, GIF, BMP, TIFF</span>
+                                </div>
+                            </div>
+                            <div class="file-preview" id="filePreview"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeUploadModal()">
+                        取消
+                    </button>
+                    <button class="btn btn-primary" id="uploadBtn" onclick="uploadVisualization()" disabled>
+                        <i class="fas fa-upload"></i> 上传
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // 添加到页面
+        document.body.appendChild(modal);
+
+        // 样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .upload-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            }
+            .upload-modal .modal-content {
+                background: var(--color-surface);
+                border-radius: var(--border-radius-lg);
+                width: 90%;
+                max-width: 500px;
+                max-height: 90vh;
+                overflow: hidden;
+                border: 1px solid var(--color-orange-primary);
+            }
+            .upload-modal .modal-header {
+                background: var(--color-surface-light);
+                padding: var(--space-md) var(--space-lg);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid var(--color-medium-gray);
+            }
+            .upload-modal .modal-header h3 {
+                margin: 0;
+                color: var(--color-text-primary);
+                display: flex;
+                align-items: center;
+                gap: var(--space-sm);
+            }
+            .upload-modal .modal-close {
+                background: none;
+                border: none;
+                color: var(--color-text-tertiary);
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: var(--border-radius-sm);
+            }
+            .upload-modal .modal-close:hover {
+                background: rgba(255, 107, 53, 0.1);
+                color: var(--color-orange-primary);
+            }
+            .upload-modal .modal-body {
+                padding: var(--space-lg);
+                overflow-y: auto;
+                max-height: calc(90vh - 120px);
+            }
+            .upload-modal .upload-form {
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-lg);
+                margin-top: var(--space-md);
+            }
+            .upload-modal .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-sm);
+            }
+            .upload-modal .form-group label {
+                display: flex;
+                align-items: center;
+                gap: var(--space-sm);
+                color: var(--color-text-primary);
+                font-weight: 500;
+            }
+            .upload-modal .form-group label i {
+                color: var(--color-orange-primary);
+                width: 20px;
+            }
+            .upload-modal .form-select {
+                background: var(--color-bg);
+                border: 1px solid var(--color-medium-gray);
+                color: var(--color-text-primary);
+                padding: var(--space-sm) var(--space-md);
+                border-radius: var(--border-radius-md);
+                font-size: 1rem;
+                transition: all 0.2s;
+            }
+            .upload-modal .form-select:focus {
+                outline: none;
+                border-color: var(--color-orange-primary);
+                box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+            }
+            .upload-modal .form-text {
+                color: var(--color-text-tertiary);
+                font-size: 0.85rem;
+            }
+            .upload-modal .file-input-wrapper {
+                position: relative;
+            }
+            .upload-modal .file-input {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                opacity: 0;
+                cursor: pointer;
+                z-index: 2;
+            }
+            .upload-modal .file-dropzone {
+                background: var(--color-bg);
+                border: 2px dashed var(--color-medium-gray);
+                border-radius: var(--border-radius-lg);
+                padding: var(--space-xl) var(--space-lg);
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .upload-modal .file-dropzone:hover {
+                border-color: var(--color-orange-primary);
+                background: var(--color-surface-light);
+            }
+            .upload-modal .file-dropzone.dragover {
+                border-color: var(--color-orange-primary);
+                background: rgba(255, 107, 53, 0.05);
+            }
+            .upload-modal .file-dropzone i {
+                font-size: 3rem;
+                color: var(--color-orange-primary);
+                margin-bottom: var(--space-md);
+                opacity: 0.7;
+            }
+            .upload-modal .file-dropzone p {
+                color: var(--color-text-primary);
+                margin-bottom: var(--space-sm);
+                font-weight: 500;
+            }
+            .upload-modal .file-hint {
+                color: var(--color-text-tertiary);
+                font-size: 0.9rem;
+            }
+            .upload-modal .file-preview {
+                margin-top: var(--space-md);
+                min-height: 60px;
+            }
+            .upload-modal .file-preview img {
+                max-width: 100%;
+                max-height: 200px;
+                border-radius: var(--border-radius-md);
+                border: 1px solid var(--color-medium-gray);
+            }
+            .upload-modal .modal-footer {
+                padding: var(--space-md) var(--space-lg);
+                background: var(--color-surface-light);
+                border-top: 1px solid var(--color-medium-gray);
+                display: flex;
+                justify-content: flex-end;
+                gap: var(--space-md);
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 文件选择处理
+        const fileInput = document.getElementById('visFile');
+        const fileDropzone = document.getElementById('fileDropzone');
+        const filePreview = document.getElementById('filePreview');
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        let selectedFile = null;
+
+        // 点击拖放区域触发文件选择
+        fileDropzone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 文件输入变化
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // 拖放功能
+        fileDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDropzone.classList.add('dragover');
+        });
+
+        fileDropzone.addEventListener('dragleave', () => {
+            fileDropzone.classList.remove('dragover');
+        });
+
+        fileDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileDropzone.classList.remove('dragover');
+
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // 处理文件
+        function handleFile(file) {
+            // 检查文件类型
+            const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/bmp', 'image/tiff'];
+            if (!validTypes.includes(file.type)) {
+                alert('不支持的文件类型。请上传PNG、JPG、GIF、BMP或TIFF格式的图片。');
+                return;
+            }
+
+            // 检查文件大小（限制为5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                alert('文件大小不能超过5MB。');
+                return;
+            }
+
+            selectedFile = file;
+
+            // 显示预览
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                filePreview.innerHTML = `
+                    <div class="preview-info">
+                        <div style="display: flex; align-items: center; gap: var(--space-md);">
+                            <img src="${e.target.result}" alt="预览">
+                            <div>
+                                <strong>${file.name}</strong>
+                                <p style="margin: var(--space-xs) 0; font-size: 0.9rem; color: var(--color-text-secondary);">
+                                    ${(file.size / 1024).toFixed(1)} KB • ${file.type.split('/')[1].toUpperCase()}
+                                </p>
+                                <p style="font-size: 0.85rem; color: var(--color-orange-primary);">
+                                    <i class="fas fa-check-circle"></i> 已选择，点击上传按钮继续
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+
+            // 启用上传按钮
+            uploadBtn.disabled = false;
+        }
+
+        // 全局函数
+        window.closeUploadModal = function() {
+            if (modal && modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        };
+
+        // 点击背景关闭
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeUploadModal();
+            }
+        });
+    };
+
+    // 上传可视化图片
+    window.uploadVisualization = function() {
+        const index = document.getElementById('visIndex').value;
+        const fileInput = document.getElementById('visFile');
+
+        if (!fileInput.files.length) {
+            alert('请先选择图片文件');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('visualization_file', file);
+        formData.append('index', index);
+
+        const uploadBtn = document.getElementById('uploadBtn');
+        const originalText = uploadBtn.innerHTML;
+
+        // 显示上传进度
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+        uploadBtn.disabled = true;
+
+        // 发送请求
+        fetch('/upload-visualization', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('上传失败: ' + data.error);
+                uploadBtn.innerHTML = originalText;
+                uploadBtn.disabled = false;
+            } else {
+                alert('上传成功！图片已保存。');
+                closeUploadModal();
+
+                // 刷新页面以显示新图片
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
+            }
+        })
+        .catch(error => {
+            console.error('上传失败:', error);
+            alert('上传失败，请检查网络连接并重试');
+            uploadBtn.innerHTML = originalText;
+            uploadBtn.disabled = false;
+        });
+    };
+
+    // 添加结果分享功能
+    const shareResult = document.createElement('div');
+    shareResult.className = 'share-result';
+    shareResult.innerHTML = `
+        <button class="btn btn-secondary" onclick="shareResultToSocial()">
+            <i class="fas fa-share-alt"></i> 分享结果
+        </button>
+    `;
+
+    // 可以添加到页面合适的位置
+    const visualizationActions = document.querySelector('.visualization-actions');
+    if (visualizationActions) {
+        visualizationActions.appendChild(shareResult);
+    }
+
+    window.shareResultToSocial = function() {
+        const resultText = `GAUSS3D压缩结果：模型"{{ run.model_name }}"压缩比{{ "%.2f"|format(run.ratio) }}:1，PSNR {{ "%.2f"|format(run.psnr) }}dB，质量评分{{ "%.0f"|format((run.psnr / 50 * 100 + run.ssim * 100 + (1 - run.lpips) * 100) / 3) }}/100`;
+        alert('分享内容已复制到剪贴板：\n' + resultText);
+        navigator.clipboard.writeText(resultText).then(() => {
+            console.log('结果已复制到剪贴板');
+        });
+    };
+
+    // 添加键盘快捷键
+    document.addEventListener('keydown', function(e) {
+        // D - 下载可视化
+        if (e.key === 'd' || e.key === 'D') {
+            e.preventDefault();
+            downloadAllVisualizations();
+        }
+
+        // 3 - 3D查看
+        if (e.key === '3') {
+            e.preventDefault();
+            viewIn3D();
+        }
+
+        // S - 分享
+        if (e.key === 's' || e.key === 'S') {
+            e.preventDefault();
+            shareResultToSocial();
+        }
+
+        // R - 重新开始
+        if (e.key === 'r' || e.key === 'R') {
+            e.preventDefault();
+            window.location.href = "{{ url_for('upload') }}";
+        }
+    });
+
+    // 添加指标解释提示
+    const metricDescriptions = {
+        '压缩比': '压缩后文件大小与原始文件大小的比值。比值越高表示压缩效果越好。',
+        'PSNR': '峰值信噪比，衡量压缩后图像与原始图像的误差。值越高表示质量越好。',
+        'SSIM': '结构相似性指数，衡量图像结构信息的保持程度。值越接近1表示质量越好。',
+        'LPIPS': '学习感知图像块相似度，基于深度学习的感知质量评估。值越低表示感知质量越好。'
+    };
+
+    const metricLabels = document.querySelectorAll('.metric-label');
+    metricLabels.forEach(label => {
+        const description = metricDescriptions[label.textContent.trim()];
+        if (description) {
+            label.setAttribute('title', description);
+            label.style.cursor = 'help';
+            label.style.borderBottom = '1px dotted var(--color-orange-primary)';
+        }
+    });
+
+    // 自动生成报告（可选）
+    setTimeout(() => {
+        console.log('自动生成压缩报告...');
+        // 这里可以添加自动生成报告的逻辑
+    }, 2000);
+});
+</script>
+{% endblock %}

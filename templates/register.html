@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}注册 - GAUSS3D{% endblock %}
+
+{% block page_title %}加入GAUSS3D社区{% endblock %}
+{% block page_subtitle %}创建一个账户，开始使用高斯三维重建模型压缩系统{% endblock %}
+
+{% block content %}
+<div class="register-section">
+    <div class="row">
+        <div class="col-form">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-user-plus"></i>
+                        注册新账户
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <form method="POST" action="{{ url_for('register') }}" class="register-form">
+                        <div class="form-group">
+                            <label for="username" class="form-label form-label-required">
+                                <i class="fas fa-user"></i> 用户名
+                            </label>
+                            <input type="text" id="username" name="username" class="form-input"
+                                   required placeholder="输入用户名" autocomplete="username">
+                            <div class="form-hint">
+                                用户名将用于登录和显示，请使用英文字母、数字或下划线
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label form-label-required">
+                                <i class="fas fa-envelope"></i> 邮箱地址
+                            </label>
+                            <input type="email" id="email" name="email" class="form-input"
+                                   required placeholder="输入邮箱地址" autocomplete="email">
+                            <div class="form-hint">
+                                请使用有效的邮箱地址，用于账户验证和通知
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label form-label-required">
+                                <i class="fas fa-lock"></i> 密码
+                            </label>
+                            <input type="password" id="password" name="password" class="form-input"
+                                   required placeholder="输入密码" autocomplete="new-password">
+                            <div class="form-hint">
+                                建议使用至少8位字符，包含字母、数字和特殊符号
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="password-strength">
+                                <div class="strength-meter">
+                                    <div class="strength-bar"></div>
+                                </div>
+                                <div class="strength-text">密码强度：弱</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" id="terms" name="terms" required class="form-check-input">
+                                <label for="terms" class="form-check-label">
+                                    我同意 <a href="#" class="link">服务条款</a> 和 <a href="#" class="link">隐私政策</a>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-user-plus"></i> 注册账户
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <p class="auth-redirect">
+                    已有账户？ <a href="{{ url_for('login') }}" class="link">立即登录</a>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+.register-section {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+}
+
+.col-form {
+    min-width: 0;
+}
+
+.col-info {
+    min-width: 0;
+}
+
+.register-form .form-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+    margin-top: var(--space-xs);
+    line-height: 1.4;
+}
+
+.password-strength {
+    margin-top: var(--space-md);
+}
+
+.strength-meter {
+    height: 6px;
+    background: var(--color-medium-gray);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: var(--space-xs);
+}
+
+.strength-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--color-error);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.strength-text {
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+    text-align: right;
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.form-check-input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-orange-primary);
+}
+
+.form-check-label {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.form-check-label .link {
+    color: var(--color-orange-primary);
+    text-decoration: none;
+}
+
+.form-check-label .link:hover {
+    text-decoration: underline;
+}
+
+.form-actions {
+    margin-top: var(--space-xl);
+}
+
+.auth-redirect {
+    color: var(--color-text-tertiary);
+}
+
+.auth-redirect .link {
+    color: var(--color-orange-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-redirect .link:hover {
+    text-decoration: underline;
+}
+
+.benefits-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.benefit {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+}
+
+.benefit-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: var(--border-radius-md);
+    color: var(--color-orange-primary);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.benefit-content h4 {
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+    font-weight: 600;
+}
+
+.benefit-content p {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+}
+
+.benefits-note {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    background: rgba(255, 107, 53, 0.05);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.benefits-note .note-icon {
+    color: var(--color-orange-primary);
+    font-size: 1.5rem;
+    margin-top: 2px;
+}
+
+.benefits-note .note-content h4 {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.benefits-note .note-content p {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+@media (max-width: 1024px) {
+    .row {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+    }
+
+    .col-info {
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .register-section {
+        padding: 0;
+    }
+
+    .benefits-note {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('password');
+    const strengthBar = document.querySelector('.strength-bar');
+    const strengthText = document.querySelector('.strength-text');
+
+    function checkPasswordStrength(password) {
+        let strength = 0;
+
+        // 长度检查
+        if (password.length >= 8) strength += 1;
+        if (password.length >= 12) strength += 1;
+
+        // 字符类型检查
+        if (/[a-z]/.test(password)) strength += 1;
+        if (/[A-Z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
+
+        return Math.min(strength, 6); // 最大6分
+    }
+
+    function updateStrengthDisplay(strength) {
+        const percentage = (strength / 6) * 100;
+        strengthBar.style.width = percentage + '%';
+
+        // 更新颜色和文本
+        if (strength <= 2) {
+            strengthBar.style.backgroundColor = 'var(--color-error)';
+            strengthText.textContent = '密码强度：弱';
+        } else if (strength <= 4) {
+            strengthBar.style.backgroundColor = 'var(--color-warning)';
+            strengthText.textContent = '密码强度：中等';
+        } else {
+            strengthBar.style.backgroundColor = 'var(--color-success)';
+            strengthText.textContent = '密码强度：强';
+        }
+    }
+
+    passwordInput.addEventListener('input', function() {
+        const password = this.value;
+        if (password.length === 0) {
+            strengthBar.style.width = '0%';
+            strengthText.textContent = '密码强度：弱';
+            return;
+        }
+
+        const strength = checkPasswordStrength(password);
+        updateStrengthDisplay(strength);
+    });
+
+    // 表单提交前验证
+    const form = document.querySelector('.register-form');
+    form.addEventListener('submit', function(e) {
+        const password = passwordInput.value;
+        const strength = checkPasswordStrength(password);
+
+        if (strength < 3) {
+            e.preventDefault();
+            alert('密码强度不足，请使用更复杂的密码（至少8位，包含大小写字母、数字和特殊字符）');
+            passwordInput.focus();
+            return false;
+        }
+
+        // 显示处理中状态
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+        submitBtn.disabled = true;
+
+        // 3秒后恢复（防止重复提交）
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 3000);
+
+        return true;
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,578 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - GAUSS3D{% endblock %}
+
+{% block page_title %}欢迎回来{% endblock %}
+{% block page_subtitle %}登录您的账户，继续您的三维模型压缩之旅{% endblock %}
+
+{% block content %}
+<div class="login-section">
+    <div class="row">
+        <div class="col-form">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-sign-in-alt"></i>
+                        用户登录
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <form method="POST" action="{{ url_for('login') }}" class="login-form">
+                        <div class="form-group">
+                            <label for="username" class="form-label form-label-required">
+                                <i class="fas fa-user"></i> 用户名
+                            </label>
+                            <input type="text" id="username" name="username" class="form-input"
+                                   required placeholder="输入用户名" autocomplete="username"
+                                   value="{{ request.form.username if request.form }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label form-label-required">
+                                <i class="fas fa-lock"></i> 密码
+                            </label>
+                            <input type="password" id="password" name="password" class="form-input"
+                                   required placeholder="输入密码" autocomplete="current-password">
+                            <div class="form-options">
+                                <div class="form-check">
+                                    <input type="checkbox" id="remember" name="remember" class="form-check-input">
+                                    <label for="remember" class="form-check-label">记住我</label>
+                                </div>
+                                <a href="#" class="forgot-password">忘记密码？</a>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-sign-in-alt"></i> 登录
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="oauth-section">
+                        <div class="oauth-divider">
+                            <span>或使用以下方式登录</span>
+                        </div>
+
+                        <div class="oauth-buttons">
+                            <button class="oauth-btn oauth-github" disabled>
+                                <i class="fab fa-github"></i> GitHub
+                            </button>
+                            <button class="oauth-btn oauth-google" disabled>
+                                <i class="fab fa-google"></i> Google
+                            </button>
+                            <button class="oauth-btn oauth-microsoft" disabled>
+                                <i class="fab fa-microsoft"></i> Microsoft
+                            </button>
+                        </div>
+
+                        <div class="oauth-note">
+                            <i class="fas fa-info-circle"></i>
+                            <span>第三方登录功能正在开发中，敬请期待</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <p class="auth-redirect">
+                    还没有账户？ <a href="{{ url_for('register') }}" class="link">立即注册</a>
+                    <span class="separator">|</span>
+                    <a href="{{ url_for('admin_login') }}" class="link">管理员登录</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="col-info">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-rocket"></i>
+                        登录后您可以
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="features-list">
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <i class="fas fa-upload"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h4>上传三维模型</h4>
+                                <p>支持 .ply 格式的点云模型上传，最大支持1GB文件</p>
+                            </div>
+                        </div>
+
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <i class="fas fa-sliders-h"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h4>配置压缩参数</h4>
+                                <p>调整相似度、剪枝率、编码数等参数，优化压缩效果</p>
+                            </div>
+                        </div>
+
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h4>查看压缩结果</h4>
+                                <p>获得完整的质量评估指标和可视化分析报告</p>
+                            </div>
+                        </div>
+
+                        <div class="feature">
+                            <div class="feature-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h4>管理历史记录</h4>
+                                <p>查看、删除或导出所有压缩操作的详细日志</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="demo-account">
+                        <div class="demo-header">
+                            <i class="fas fa-flask"></i>
+                            <h4>演示账户</h4>
+                        </div>
+                        <p class="demo-text">
+                            如果您是第一次体验系统，可以注册新账户开始使用。
+                            系统演示数据会在每次重启时重置，请放心试用所有功能。
+                        </p>
+                        <div class="demo-tip">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>提示：在真实使用场景中，建议使用您的工作邮箱注册</span>
+                        </div>
+                    </div>
+
+                    <div class="security-notice">
+                        <div class="security-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="security-content">
+                            <h5>安全提示</h5>
+                            <p>请确保您在安全的网络环境下登录，不要与他人共享账户密码。
+                               系统使用密码哈希存储，保护您的账户安全。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.login-section {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+}
+
+.col-form {
+    min-width: 0;
+}
+
+.col-info {
+    min-width: 0;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--space-sm);
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.form-check-input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-orange-primary);
+}
+
+.form-check-label {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.forgot-password {
+    font-size: 0.9rem;
+    color: var(--color-orange-primary);
+    text-decoration: none;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.form-actions {
+    margin-top: var(--space-lg);
+}
+
+.oauth-section {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-medium-gray);
+}
+
+.oauth-divider {
+    text-align: center;
+    position: relative;
+    margin-bottom: var(--space-lg);
+}
+
+.oauth-divider span {
+    background: var(--color-surface);
+    padding: 0 var(--space-md);
+    color: var(--color-text-tertiary);
+    font-size: 0.9rem;
+    position: relative;
+    z-index: 1;
+}
+
+.oauth-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--color-medium-gray);
+}
+
+.oauth-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.oauth-btn {
+    padding: var(--space-md);
+    border: 1px solid var(--color-medium-gray);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    transition: all 0.2s;
+}
+
+.oauth-btn:hover {
+    background: var(--color-surface-light);
+    transform: translateY(-1px);
+}
+
+.oauth-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.oauth-btn:disabled:hover {
+    transform: none;
+    background: var(--color-surface);
+}
+
+.oauth-github {
+    border-color: #333;
+    color: #333;
+}
+
+.oauth-google {
+    border-color: #DB4437;
+    color: #DB4437;
+}
+
+.oauth-microsoft {
+    border-color: #00A4EF;
+    color: #00A4EF;
+}
+
+.oauth-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    color: var(--color-text-tertiary);
+    font-size: 0.85rem;
+}
+
+.oauth-note i {
+    color: var(--color-orange-primary);
+}
+
+.auth-redirect {
+    color: var(--color-text-tertiary);
+}
+
+.auth-redirect .link {
+    color: var(--color-orange-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-redirect .link:hover {
+    text-decoration: underline;
+}
+
+.separator {
+    margin: 0 var(--space-md);
+    color: var(--color-lighter-gray);
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.feature {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 53, 0.1);
+    border-radius: var(--border-radius-md);
+    color: var(--color-orange-primary);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.feature-content h4 {
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+    font-weight: 600;
+}
+
+.feature-content p {
+    font-size: 0.9rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.5;
+}
+
+.demo-account {
+    padding: var(--space-lg);
+    background: rgba(33, 150, 243, 0.05);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(33, 150, 243, 0.2);
+    margin-bottom: var(--space-lg);
+}
+
+.demo-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.demo-header i {
+    color: #2196F3;
+    font-size: 1.2rem;
+}
+
+.demo-header h4 {
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.demo-text {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+}
+
+.demo-tip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: var(--border-radius-md);
+    border-left: 3px solid var(--color-warning);
+}
+
+.demo-tip i {
+    color: var(--color-warning);
+}
+
+.demo-tip span {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}
+
+.security-notice {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: rgba(76, 175, 80, 0.05);
+    border-radius: var(--border-radius-md);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.security-icon {
+    color: var(--color-success);
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.security-content h5 {
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.security-content p {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+@media (max-width: 1024px) {
+    .row {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+    }
+
+    .col-info {
+        order: -1;
+    }
+
+    .oauth-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .login-section {
+        padding: 0;
+    }
+
+    .form-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .forgot-password {
+        margin-top: var(--space-xs);
+    }
+
+    .security-notice {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.querySelector('.login-form');
+    const rememberCheckbox = document.getElementById('remember');
+
+    // 尝试从localStorage获取保存的用户名
+    if (localStorage.getItem('rememberUsername') === 'true') {
+        const savedUsername = localStorage.getItem('username');
+        if (savedUsername) {
+            document.getElementById('username').value = savedUsername;
+            rememberCheckbox.checked = true;
+        }
+    }
+
+    // 表单提交处理
+    loginForm.addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            e.preventDefault();
+            alert('请填写用户名和密码');
+            return false;
+        }
+
+        // 记住用户名功能
+        if (rememberCheckbox.checked) {
+            localStorage.setItem('username', username);
+            localStorage.setItem('rememberUsername', 'true');
+        } else {
+            localStorage.removeItem('username');
+            localStorage.setItem('rememberUsername', 'false');
+        }
+
+        // 显示处理中状态
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+        submitBtn.disabled = true;
+
+        // 3秒后恢复（防止重复提交）
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 3000);
+
+        return true;
+    });
+
+    // 忘记密码功能
+    const forgotPasswordLink = document.querySelector('.forgot-password');
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('密码重置功能正在开发中，请联系系统管理员获取帮助。');
+        });
+    }
+
+    // 输入框动画效果
+    const inputs = document.querySelectorAll('.form-input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+
+    // 第三方登录按钮提示
+    const oauthButtons = document.querySelectorAll('.oauth-btn');
+    oauthButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            alert('第三方登录功能正在开发中，敬请期待！');
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}高斯三维重建模型压缩与可视化系统{% endblock %}</title>
+
+    <!-- 三维重建压缩系统设计 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <!-- 手绘装饰元素 -->
+    <div class="hand-drawn-line top-line"></div>
+    <div class="hand-drawn-line bottom-line"></div>
+    <div class="hand-drawn-circle circle-1"></div>
+    <div class="hand-drawn-circle circle-2"></div>
+    <div class="hand-drawn-dot dot-1"></div>
+    <div class="hand-drawn-dot dot-2"></div>
+
+    <!-- 主容器 -->
+    <div class="app-container">
+        <!-- 顶部导航 -->
+        <header class="main-header">
+            <div class="header-content">
+                <!-- 品牌标识 -->
+                <div class="brand-section">
+                    <div class="logo-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 2L30 16L16 30L2 16L16 2Z" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="16" cy="16" r="6" fill="#FF6B35" fill-opacity="0.3"/>
+                            <path d="M8 8L24 24M8 24L24 8" stroke="#1A1A1A" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <h1 class="brand-title">GAUSS<span class="brand-accent">3D</span></h1>
+                        <p class="brand-subtitle">三维重建压缩系统</p>
+                    </div>
+                </div>
+
+                <!-- 导航菜单 -->
+                <nav class="main-nav">
+                    {% if session.user_id %}
+                        <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                            <i class="fas fa-tachometer-alt"></i>控制台
+                        </a>
+                        <a href="{{ url_for('upload') }}" class="nav-link {% if request.endpoint == 'upload' %}active{% endif %}">
+                            <i class="fas fa-cloud-upload-alt"></i>模型导入
+                        </a>
+                        <a href="{{ url_for('logs') }}" class="nav-link {% if request.endpoint == 'logs' %}active{% endif %}">
+                            <i class="fas fa-history"></i>日志
+                        </a>
+                        <a href="{{ url_for('viewer') }}" class="nav-link {% if request.endpoint == 'viewer' %}active{% endif %}">
+                            <i class="fas fa-cube"></i>3D查看
+                        </a>
+                    {% endif %}
+
+                    {% if session.admin_logged_in %}
+                        <a href="{{ url_for('admin_users') }}" class="nav-link admin-link">
+                            <i class="fas fa-user-shield"></i>管理后台
+                        </a>
+                    {% endif %}
+                </nav>
+
+                <!-- 用户信息/登录状态 -->
+                <div class="user-section">
+                    {% if session.user_id %}
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <div class="user-details">
+                                <span class="username">{{ session.username }}</span>
+                                <a href="{{ url_for('logout') }}" class="logout-link">退出</a>
+                            </div>
+                        </div>
+                    {% elif session.admin_logged_in %}
+                        <div class="admin-info">
+                            <span class="admin-badge"><i class="fas fa-shield-alt"></i> 管理员</span>
+                            <a href="{{ url_for('admin_logout') }}" class="logout-link">退出</a>
+                        </div>
+                    {% else %}
+                        <div class="auth-links">
+                            <a href="{{ url_for('login') }}" class="btn-auth btn-login">登录</a>
+                            <a href="{{ url_for('register') }}" class="btn-auth btn-register">注册</a>
+                            <a href="{{ url_for('admin_login') }}" class="btn-auth btn-admin">管理员</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- Flash消息 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-container">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                <span class="flash-icon">
+                                    {% if category == 'success' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif category == 'error' %}
+                                        <i class="fas fa-exclamation-circle"></i>
+                                    {% elif category == 'warning' %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle"></i>
+                                    {% endif %}
+                                </span>
+                                <span class="flash-text">{{ message }}</span>
+                                <button class="flash-close" onclick="this.parentElement.remove()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- 页面标题 -->
+            {% block page_header %}
+                <div class="page-header">
+                    <h2 class="page-title">{% block page_title %}{% endblock %}</h2>
+                    <p class="page-subtitle">{% block page_subtitle %}{% endblock %}</p>
+                </div>
+            {% endblock %}
+
+            <!-- 页面内容 -->
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="main-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <div class="footer-brand">
+                        <span class="footer-logo">G³</span>
+                        <div class="footer-text">
+                            <span class="footer-title">高斯三维重建压缩系统</span>
+                            <span class="footer-tagline">三维重建压缩系统</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-right">
+                    <div class="footer-links">
+                        <a href="{{ url_for('index') }}" class="footer-link">首页</a>
+                        <a href="{{ url_for('dashboard') }}" class="footer-link">控制台</a>
+                        <a href="{{ url_for('logs') }}" class="footer-link">日志</a>
+                        <a href="{{ url_for('viewer') }}" class="footer-link">3D查看</a>
+                    </div>
+
+                    <div class="footer-social">
+                        <span class="social-text">三维重建压缩</span>
+                        <div class="social-icons">
+                            <a href="#" class="social-icon"><i class="fab fa-github"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-codepen"></i></a>
+                            <a href="#" class="social-icon"><i class="fab fa-dribbble"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="copyright">
+                    © 2026 GAUSS3D · 三维重建压缩系统
+                </p>
+                <div class="footer-meta">
+                    <span class="meta-item"><i class="fas fa-code"></i> Flask + SQLite</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 手绘签名 -->
+    <div class="hand-signature">
+        <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10,20 Q20,10 30,20 T50,20" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <path d="M60,20 Q70,30 80,20 T100,20" stroke="#1A1A1A" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <path d="M110,20 L115,15 L120,25" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        </svg>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
