@@ -505,6 +505,27 @@ def logs():
             reader = csv.DictReader(f)
             log_data = list(reader)
 
+            # 转换数值字段类型
+            numeric_fields = ['similarity', 'prune', 'psnr', 'ssim', 'lpips', 'before_mb', 'after_mb', 'ratio', 'duration']
+            int_fields = ['num_codes']
+
+            for log in log_data:
+                # 转换浮点数字段
+                for field in numeric_fields:
+                    if field in log and log[field]:
+                        try:
+                            log[field] = float(log[field])
+                        except (ValueError, TypeError):
+                            log[field] = 0.0
+
+                # 转换整数字段
+                for field in int_fields:
+                    if field in log and log[field]:
+                        try:
+                            log[field] = int(log[field])
+                        except (ValueError, TypeError):
+                            log[field] = 0
+
     return render_template('logs.html', logs=log_data)
 
 @app.route('/logs/delete/<int:line_num>')
